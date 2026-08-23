@@ -4,7 +4,7 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 
 > 📕 **Comece pelo [GUIA-DE-USO.pdf](GUIA-DE-USO.pdf)** — explica todo o fluxo em 7 seções.
 
-## Os 4 artefatos (v3.1)
+## Os 4 artefatos (v3.2)
 
 | Arquivo | Papel |
 |---|---|
@@ -28,7 +28,8 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 - **Documentação nasce com a feature**, nunca no final (DOC-VIVA-01).
 - **Verificação exige evidência** — "funciona" sem a saída colada não conta (IA-EVIDENCE-01).
 - **Quarentena de dependências** — release com menos de ~14 dias não entra (DEP-QUARENTENA-01).
+- **Pontos de restauração** — todo checkpoint entra num ledger append-only; o git guarda o conteúdo, o ledger guarda o significado; desfazer é sempre via git, nunca de memória (CTX-RESTORE-01/02/03).
 
 ## Licença e contribuição
 
-**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.1`).
+**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.2`).

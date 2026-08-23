@@ -1,5 +1,5 @@
 # KIT DE PARTIDA — UNIVERSAL
-**Versão 3.1 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
+**Versão 3.2 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
 
 Este arquivo transforma o Protocolo de Contexto (regras `CTX-*` da Constituição) em **arquivos prontos para copiar**. Ele existe porque o maior risco de construir com IA não é código ruim — é **amnésia de contexto**: a janela estoura, a sessão seguinte não sabe o que foi decidido, e o agente refaz, desfaz ou contradiz o trabalho anterior. A cura é estrutural: **antes da primeira linha de código, cria-se a memória do projeto no repositório.** O chat é descartável; o repo é permanente.
 
@@ -17,33 +17,34 @@ Execute na ordem. Só depois do último ✅ a primeira feature pode começar.
 3. [ ] `ESTADO.md` (template §3)
 4. [ ] `README.md` (o que é + como rodar/publicar)
 5. [ ] `docs/FASES.md` com as fases planejadas (template §4)
+6. [ ] `docs/PONTOS-DE-RESTAURACAO.md` com cabeçalho (template §6B) — todo checkpoint vira ponto de restauração
 
 ### `{{PORTE}}` = app-simples (kit padrão — 30 minutos)
 Tudo do site-estático, mais:
-6. [ ] `docs/adr/` criado + ADR-001 registrando stack escolhida (template §5)
-7. [ ] `docs/CORRECOES.md` vazio com cabeçalho (template §6)
-8. [ ] `.env.example` completo + `.env` no `.gitignore` desde o commit 1
-9. [ ] Estrutura de diretórios do Nível 0 (`modules/` + `shared/` ou equivalente do framework)
+7. [ ] `docs/adr/` criado + ADR-001 registrando stack escolhida (template §5)
+8. [ ] `docs/CORRECOES.md` vazio com cabeçalho (template §6)
+9. [ ] `.env.example` completo + `.env` no `.gitignore` desde o commit 1
+10. [ ] Estrutura de diretórios do Nível 0 (`modules/` + `shared/` ou equivalente do framework)
 
 ### `{{PORTE}}` = sistema (kit completo — ~2 horas, economiza semanas)
 Tudo do app-simples, mais:
-10. [ ] Validação de schema instalada e exemplificada em 1 rota
-11. [ ] Logger estruturado JSON com `requestId` configurado
-12. [ ] Error tracking conectado (categoria em `{{CATEGORIA_FORNECEDOR}}`)
-13. [ ] Migrations versionadas inicializadas
-14. [ ] Script de deploy nas fases universais (aborta em erro + lock)
-15. [ ] Headers de segurança + auth com cookie HttpOnly (SE há login)
-16. [ ] Backup automatizado (comprimido + criptografado) + dead man's switch (SE há dados de usuário)
-17. [ ] Doc técnica inicializada: `docs/API.md` ou OpenAPI (DOC-API-01) — cresce a cada fase, nunca "no final"
-18. [ ] Triagem de dependências ativa: `ignore-scripts` por padrão + regra de quarentena de release (DEP-QUARENTENA-01)
+11. [ ] Validação de schema instalada e exemplificada em 1 rota
+12. [ ] Logger estruturado JSON com `requestId` configurado
+13. [ ] Error tracking conectado (categoria em `{{CATEGORIA_FORNECEDOR}}`)
+14. [ ] Migrations versionadas inicializadas
+15. [ ] Script de deploy nas fases universais (aborta em erro + lock)
+16. [ ] Headers de segurança + auth com cookie HttpOnly (SE há login)
+17. [ ] Backup automatizado (comprimido + criptografado) + dead man's switch (SE há dados de usuário)
+18. [ ] Doc técnica inicializada: `docs/API.md` ou OpenAPI (DOC-API-01) — cresce a cada fase, nunca "no final"
+19. [ ] Triagem de dependências ativa: `ignore-scripts` por padrão + regra de quarentena de release (DEP-QUARENTENA-01)
 
 ### `{{PORTE}}` = SaaS (kit sistema + camada SaaS)
 Tudo do sistema, mais:
-19. [ ] Perguntas de produto respondidas pelo `{{OWNER}}` e registradas em ADR (SAAS-ADR-01) — planos? trial? multi-tenant? cobrança? offboarding?
-20. [ ] SE multi-tenant: `tenant_id` no schema desde o dia 0 + scoping executável (SAAS-TENANT-02)
-21. [ ] Gateway de pagamento como fonte da verdade + webhook idempotente (esqueleto)
-22. [ ] SE emite chaves de API / envia webhooks: esqueleto conforme API-KEY-01 / WEBHOOK-OUT-01 (hash da chave, prefixo, assinatura de saída)
-23. [ ] Teste de posse com 2 contas no plano de testes
+20. [ ] Perguntas de produto respondidas pelo `{{OWNER}}` e registradas em ADR (SAAS-ADR-01) — planos? trial? multi-tenant? cobrança? offboarding?
+21. [ ] SE multi-tenant: `tenant_id` no schema desde o dia 0 + scoping executável (SAAS-TENANT-02)
+22. [ ] Gateway de pagamento como fonte da verdade + webhook idempotente (esqueleto)
+23. [ ] SE emite chaves de API / envia webhooks: esqueleto conforme API-KEY-01 / WEBHOOK-OUT-01 (hash da chave, prefixo, assinatura de saída)
+24. [ ] Teste de posse com 2 contas no plano de testes
 
 ---
 
@@ -178,6 +179,38 @@ Princípios de fatiamento (§ORD da Constituição):
 
 ---
 
+## 6B. TEMPLATE — `docs/PONTOS-DE-RESTAURACAO.md` (a linha do tempo restaurável)
+
+> Ledger **append-only** (CTX-RESTORE-01/02/03). Divisão de papéis: o **git guarda o CONTEÚDO**
+> de cada ponto (restauração byte a byte, sem perda); **este arquivo guarda o SIGNIFICADO**
+> (o que cada ponto é, o que entrou, mudou e saiu). Custo de tokens ~zero: a entrada nasce
+> no momento do checkpoint (informação já em contexto), nunca se relê o arquivo inteiro,
+> entrada antiga nunca é reescrita, e código/diff NUNCA é colado aqui (referencie o hash).
+
+```markdown
+# PONTOS DE RESTAURAÇÃO — {{NOME_DO_PROJETO}}
+> Append-only. Entrada antiga é IMUTÁVEL. Sem código/diff aqui — o commit guarda o conteúdo.
+> Visão MACRO: leia só os títulos `## PR-NNN` (a linha do tempo do projeto).
+> Visão MICRO: leia o corpo da entrada desejada.
+>
+> COMO RESTAURAR (sempre via git, com o hash da entrada — nunca de memória):
+> - Inspecionar um ponto:            git switch -c inspecao-prNNN <hash>
+> - Voltar arquivos específicos:     git restore --source <hash> -- <caminhos>
+> - Reverter um ponto ruim:          git revert <hash>
+> - Voltar o projeto INTEIRO ao ponto: criar branch de resgate a partir do <hash>
+>   (reset --hard só com autorização explícita do {{OWNER}} — IA-DESTRUCT-01)
+
+## PR-001 — {{DATA}} — {{funcionalidade + ação, ex: "Construtor de forms: validação por campo"}}
+- **Commit:** `{{hash}}` · **Fase:** F{{N}} · **Tipo:** adicionado | modificado | corrigido | removido
+- **Funcionalidades tocadas:** {{lista curta, ex: construtor-form, dashboard}}
+- **Adicionado:** {{item a item; "—" se nada}}
+- **Modificado:** {{item a item, com o comportamento anterior → novo; "—" se nada}}
+- **Removido:** {{item a item + POR QUÊ; "—" se nada}}
+- **Estado verificado neste ponto:** {{build/testes/smoke — evidência no commit (IA-EVIDENCE-01)}}
+```
+
+---
+
 ## 7. PROMPT DE PARTIDA (colável — inicia qualquer projeto no padrão)
 
 Cole numa sessão nova de agente para começar um projeto do zero:
@@ -195,7 +228,9 @@ ANTES de qualquer código (CTX-KIT-01):
 
 Regras de sessão: ritual de início e fim SEMPRE (CTX-RITUAL-01); contexto ficando
 longo → checkpoint imediato (CTX-CHECKPOINT-01); decisão de chat vira arquivo
-antes do fim da sessão (CTX-RESUMO-01).
+antes do fim da sessão (CTX-RESUMO-01); todo checkpoint vira ponto de restauração
+em docs/PONTOS-DE-RESTAURACAO.md (CTX-RESTORE-01); ANTES de qualquer operação de
+risco, savepoint (commit) primeiro (CTX-RESTORE-02) — desfazer é git, não memória.
 ```
 
 E para **retomar** um projeto existente:
@@ -209,7 +244,7 @@ passo do ESTADO.md. Não me pergunte "onde paramos" — o ESTADO.md responde.
 
 ---
 
-## 8. POR QUE ISTO RESOLVE A AMNÉSIA (o mecanismo, em 6 linhas)
+## 8. POR QUE ISTO RESOLVE A AMNÉSIA (o mecanismo, em 8 linhas)
 
 1. **Janela estourou no meio?** O último checkpoint (CTX-CHECKPOINT-01) garante que nada além de minutos se perde — commit + ESTADO.md são o savegame.
 2. **Sessão nova não sabe nada?** O ritual de início (CTX-RITUAL-01) reidrata o essencial em ~2 arquivos curtos, não em 200k tokens de histórico.
@@ -217,6 +252,8 @@ passo do ESTADO.md. Não me pergunte "onde paramos" — o ESTADO.md responde.
 4. **Agente quer refazer o que já existe?** CORRECOES.md + ADRs explicam por que o código é como é — o "estranho" documentado não é consertado de volta.
 5. **Tarefa grande demais para uma janela?** CTX-FASE-01 proíbe: o plano em FASES.md já nasceu fatiado em blocos de uma sessão.
 6. **Dois documentos dizendo coisas diferentes?** CTX-FONTE-01: cada fato tem um único arquivo-dono; o resto referencia.
+7. **IA errou e apagou o que estava certo?** CTX-RESTORE-02: havia savepoint (commit) ANTES da operação de risco — desfazer é `git restore --source <hash>`, não a IA re-digitando de memória. A memória do que ela fez não importa; o git lembra por ela.
+8. **"O que tem em cada ponto? O que já foi feito?"** CTX-RESTORE-01/03: o ledger PONTOS-DE-RESTAURACAO.md responde nas duas alturas — títulos `PR-NNN` = visão macro (linha do tempo por funcionalidade); corpo da entrada = visão micro (o que entrou, mudou e saiu, item a item) — sem custo extra, porque cada entrada nasceu junto com o checkpoint.
 
 ## 9. PROMPT DE INSTANCIAÇÃO (gera a Constituição do SEU projeto)
 
@@ -243,4 +280,4 @@ Regras de geração:
 
 ---
 
-*Fim do Kit de Partida v3.1 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-23).*
+*Fim do Kit de Partida v3.2 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-24). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida.*

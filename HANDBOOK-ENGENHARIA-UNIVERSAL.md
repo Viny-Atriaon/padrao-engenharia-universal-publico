@@ -1,5 +1,5 @@
 # HANDBOOK DE ENGENHARIA — UNIVERSAL
-**Companheiro explicativo da Constituição de Engenharia — Universal v3.1 (Definitiva)**
+**Companheiro explicativo da Constituição de Engenharia — Universal v3.2 (Definitiva)**
 **Documento de consulta humana · NÃO deve ser colado inteiro em sessão de IA**
 
 ---
@@ -1125,6 +1125,51 @@ Fase "API pública de consulta" num checkpoint só: migration da tabela `api_key
 
 ---
 
+## CAPÍTULO 24 — Pontos de restauração: reversibilidade sem memória (novo na v3.2)
+
+> Explica: `CTX-RESTORE-01`, `CTX-RESTORE-02`, `CTX-RESTORE-03` e o template §6B do Kit de Partida.
+
+### Por que existe
+
+O incidente que originou este capítulo: um agente de IA, construindo um dashboard com construtor de formulários, cometeu um erro que **apagou código que estava correto**. Ao receber o pedido de "desfazer", respondeu que não tinha mais acesso à memória do que havia feito — e era verdade: a janela de contexto é volátil, e o registro do que foi mudado morava só nela. O trabalho correto foi perdido não por falta de backup, mas por **falta de reversibilidade estruturada**: não havia ponto anterior nomeado para voltar, nem mapa dizendo o que existia em cada ponto.
+
+O capítulo 21 resolve a amnésia de *progresso* (onde paramos); este resolve a amnésia de *conteúdo* (o que existia antes do erro). São irmãos, mas a falha é distinta: dá para saber perfeitamente "onde paramos" e ainda assim ser incapaz de restaurar o que uma edição ruim destruiu.
+
+### O mecanismo — git é o cofre, o ledger é o mapa
+
+A tentação ao resolver isso é errada: registrar num markdown o *conteúdo* de tudo que foi feito (código, diffs, versões de arquivos). Isso duplica o que o git já faz de graça, cresce sem limite, estoura janela de contexto e diverge do código real em uma semana. A divisão correta de papéis:
+
+- **O git guarda o CONTEÚDO.** Cada commit já é um snapshot integral e imutável do projeto — restauração byte a byte, sem perda, por construção. Não se reimplementa isso em markdown; usa-se.
+- **O ledger (`docs/PONTOS-DE-RESTAURACAO.md`) guarda o SIGNIFICADO.** O que o git não tem é semântica legível: qual funcionalidade cada ponto adicionou, o que mudou de comportamento, o que foi removido e por quê. O ledger é essa camada — uma entrada `PR-NNN` por checkpoint, com o hash do commit como ponte para o cofre.
+- **Savepoint pré-risco (`CTX-RESTORE-02`) — a regra que teria evitado o incidente.** Antes de qualquer operação de risco (edição multi-arquivo, refatoração, migration, remoção), commit imediato do estado atual, mesmo WIP. A partir daí, o erro da IA é sempre reversível por `git restore --source <hash>` — a memória dela é irrelevante, porque o git lembra por ela. "Desfazer" reconstruindo de memória é proibido por regra: é exatamente o método que falhou.
+- **Micro e macro sem duplicação (`CTX-RESTORE-03`).** A visão macro ("o que já foi feito neste projeto, por funcionalidade?") é a leitura dos títulos `## PR-NNN` em sequência — a linha do tempo. A visão micro ("o que exatamente o PR-014 mudou?") é o corpo daquela entrada. Não existe um sumário paralelo a manter sincronizado: as duas visões derivam do mesmo registro, escrito uma única vez.
+
+### Por que o custo de tokens é ~zero (a propriedade que a regra protege)
+
+1. **Escrita única, no momento certo:** a entrada nasce junto com o checkpoint, quando a informação ainda está fresca no contexto — nada precisa ser relido ou reconstituído para escrevê-la.
+2. **Append-only:** acrescentar ao fim não exige reler o arquivo. Entrada antiga é imutável — nunca há "atualização retroativa" consumindo leitura.
+3. **Sem código no ledger:** o volume pesado (código, diffs) fica no git, que não custa token nenhum. O ledger carrega frases, não fontes.
+4. **Leitura sob demanda e seletiva:** o arquivo só é lido quando alguém pergunta — e aí lê-se só os títulos (macro) ou só a entrada relevante (micro), nunca o arquivo inteiro por rotina. O ritual de início de sessão (CTX-RITUAL-01) NÃO inclui este arquivo — ele não é contexto de trabalho, é mapa de emergência e de consulta.
+
+### Quando NÃO aplicar
+
+- **Não substitui backup de banco (`BKP-*`).** O git restaura *código*; dados de usuário vivem no banco e têm seu próprio regime de dump/restore. Restaurar o código ao PR-010 não desfaz uma migration aplicada — schema segue o regime forward-only do Pipeline (expand/contract).
+- **Script descartável sem retomabilidade** (mesmo critério do cap. 21) dispensa o ledger — mas não dispensa o bom senso do savepoint se o script mexe em algo que dói perder.
+
+### Erros comuns
+
+- **Colar diff/código na entrada** "para ficar completo" — é o anti-padrão número 1: duplica o git, incha o arquivo e viola CTX-RESTORE-03. Completude vem do hash, não da cópia.
+- **Reescrever entradas antigas** para "melhorar o histórico" — histórico reescrito é histórico que mente; a imutabilidade é o que torna o ledger confiável como mapa.
+- **Pular o savepoint porque "é só um ajuste rápido"** — o incidente de origem foi exatamente um momento comum de desenvolvimento. O custo do savepoint é um commit; o custo da ausência dele foi um dashboard perdido.
+- **Restaurar com `reset --hard` por reflexo** — destrutivo e proibido sem autorização explícita (IA-DESTRUCT-01). O caminho seguro: branch de resgate a partir do hash, ou `git restore --source` de caminhos específicos, ou `git revert`.
+- **Confundir o ledger com o ESTADO.md** — ESTADO.md diz onde o trabalho *está* (presente, mutável, teto de 150 linhas); o ledger diz o que cada ponto *foi* (passado, imutável, cresce para sempre). Fundir os dois viola CTX-FONTE-01 e quebra as duas funções.
+
+### Exemplo prático `[EXEMPLO ILUSTRATIVO]` — o incidente, revivido com a regra em vigor
+
+Sessão constrói o dashboard; construtor de formulários funciona (PR-014, commit `e4f5a6b`, entrada: "adicionado: drag-and-drop de campos; validação por campo"). Na tarefa seguinte — "adicione máscaras de input" — a IA, antes de tocar nos 6 arquivos do construtor, faz o savepoint (`savepoint: pré-máscaras`, `c7d8e9f`) e só então edita. A edição dá errado e corrompe o drag-and-drop. O usuário: "desfaça". A IA não consulta memória nenhuma: `git restore --source c7d8e9f -- src/modules/forms/` — o construtor volta a funcionar em segundos, byte a byte. O erro custou minutos, não o projeto. E quando o usuário pergunta "o que já temos pronto?", a resposta é a leitura dos títulos PR-001..PR-014: a linha do tempo inteira, em 14 linhas.
+
+---
+
 ## GLOSSÁRIO — termos-gatilho com critério verificável
 
 Estes termos aparecem em regras condicionais. Cada um tem um **critério verificável** — não é "sensação", é teste. (Fonte normativa: o glossário da Constituição; aqui expandido.)
@@ -1167,6 +1212,7 @@ Todo domínio normativo da Constituição tem um capítulo explicativo. Sem bura
 | Perfis de escala de time | seção Perfis (`{{TAMANHO_TIME}}`), `CI-HARDEN-01`, `SECRETS-SCOPE-01` | Cap. 20 |
 | Nível 3 (dor medida) | `SCALE-*`, `SAAS-PRORATION-01`, `SAAS-DUNNING-01` | Cap. 1 (filosofia §2) + Glossário ("dor medida") |
 | Protocolo de contexto / anti-amnésia | `CTX-*`, `{{PORTE}}`, `DOC-BASE-01` | Cap. 21 + Kit de Partida |
+| Pontos de restauração / reversibilidade | `CTX-RESTORE-01`, `CTX-RESTORE-02`, `CTX-RESTORE-03` | Cap. 24 + Kit §6B |
 | Ordem de construção / escala-pronta / código p/ humanos | `ORD-*`, `SCALE-READY-01`, `LEG-HUMANO-01`, `IA-EVIDENCE-01` | Cap. 22 + Kit §9 |
 | Documentação viva / APIs expostas / quarentena de deps | `DOC-VIVA-01`, `DOC-API-01`, `API-KEY-01`, `WEBHOOK-OUT-01`, `DEP-QUARENTENA-01`, `DEP-MINIMAL-01` | Cap. 23 |
 | Governança do padrão | `GOV-*` | Governança do Padrão (abaixo) |
@@ -1199,4 +1245,4 @@ Este é o princípio de governança mais fácil de esquecer e o mais importante:
 Quando em dúvida sobre onde algo vai: *é uma regra verificável?* → Constituição. *É uma explicação, exemplo, racional ou tabela?* → Handbook. Em conflito entre os dois, **a Constituição vence** — sempre.
 
 ---
-*Fim do Handbook. Companheiro da Constituição de Engenharia — Universal v3.1 (Definitiva) e do Kit de Partida. Ele explica; não decide. A norma está na Constituição. v2.0 acrescentou o cap. 21 (engenharia de contexto) e o Kit; v3.0 — após validação em uso real — o cap. 22 (ordem de construção, escala-pronta, código para humanos, evidência) e a instanciação como modo preferido; v3.1 o cap. 23 (documentação viva que nasce com a feature, chaves de API e webhooks emitidos, backup comprimido+criptografado, quarentena anti-supply-chain de dependências).*
+*Fim do Handbook. Companheiro da Constituição de Engenharia — Universal v3.2 (Definitiva) e do Kit de Partida. Ele explica; não decide. A norma está na Constituição. v2.0 acrescentou o cap. 21 (engenharia de contexto) e o Kit; v3.0 — após validação em uso real — o cap. 22 (ordem de construção, escala-pronta, código para humanos, evidência) e a instanciação como modo preferido; v3.1 o cap. 23 (documentação viva que nasce com a feature, chaves de API e webhooks emitidos, backup comprimido+criptografado, quarentena anti-supply-chain de dependências); v3.2 o cap. 24 (pontos de restauração — git como cofre, ledger como mapa, savepoint pré-risco; origem: incidente real de perda irrecuperável por "desfazer de memória").*

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# audit.sh — Auditoria mínima da Constituição de Engenharia Universal v3.1
+# audit.sh — Auditoria mínima da Constituição de Engenharia Universal v3.2
 # Cumpre GOV-AUDIT-01: verifica mecanicamente as regras [M] automatizáveis.
 #
 # Uso:
@@ -23,7 +23,7 @@ bad()  { printf "❌ %-24s %s\n" "$1" "$2"; FAIL=$((FAIL+1)); }
 warn() { printf "⚠️  %-24s %s\n" "$1" "$2"; WARN=$((WARN+1)); }
 
 echo "============================================================"
-echo " AUDITORIA — Constituição Universal v3.1 — $(basename "$PWD")"
+echo " AUDITORIA — Constituição Universal v3.2 — $(basename "$PWD")"
 echo "============================================================"
 
 # ---------- GIT-INIT-01: repositório git ----------
@@ -53,6 +53,18 @@ else bad "DOC-BASE-01a" "sem arquivo de instruções do agente (AGENTS.md)"; fi
 [ -f docs/FASES.md ]      && ok "CTX-FASE-01" "docs/FASES.md presente"      || warn "CTX-FASE-01" "sem docs/FASES.md — plano de fases não registrado"
 [ -d docs/adr ]           && ok "DOC-ADR-01" "docs/adr/ presente"           || warn "DOC-ADR-01" "sem docs/adr/ — decisões sem registro"
 [ -f docs/CORRECOES.md ]  && ok "LEG-CORRECOES-01" "docs/CORRECOES.md presente" || warn "LEG-CORRECOES-01" "sem docs/CORRECOES.md"
+if [ -f docs/PONTOS-DE-RESTAURACAO.md ]; then
+  ok "CTX-RESTORE-01" "docs/PONTOS-DE-RESTAURACAO.md presente"
+  # entradas PR-NNN devem referenciar hash de commit — sem hash, o ponto não é restaurável
+  NPR=$(grep -cE '^## PR-[0-9]+' docs/PONTOS-DE-RESTAURACAO.md || true)
+  if [ "${NPR:-0}" -gt 0 ]; then
+    NHASH=$(grep -cE '\*\*Commit:\*\*.*[0-9a-f]{7,40}' docs/PONTOS-DE-RESTAURACAO.md || true)
+    if [ "${NHASH:-0}" -ge "$NPR" ]; then ok "CTX-RESTORE-01b" "$NPR ponto(s) de restauração, todos com hash"
+    else bad "CTX-RESTORE-01b" "$((NPR-NHASH)) entrada(s) PR sem hash de commit — ponto não restaurável"; fi
+  fi
+else
+  warn "CTX-RESTORE-01" "sem docs/PONTOS-DE-RESTAURACAO.md — checkpoints sem mapa de restauração"
+fi
 if [ -f AGENTS.md ] || [ -f CLAUDE.md ]; then
   if grep -qsiE 'constitui[cç][aã]o.*(v[0-9]|universal)|padr[aã]o seguido' AGENTS.md CLAUDE.md 2>/dev/null; then
     ok "DOC-BASE-01c" "versão do padrão declarada"
