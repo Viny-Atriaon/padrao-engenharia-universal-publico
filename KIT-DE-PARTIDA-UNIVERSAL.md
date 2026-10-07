@@ -1,5 +1,5 @@
 # KIT DE PARTIDA — UNIVERSAL
-**Versão 3.2 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
+**Versão 3.4 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
 
 Este arquivo transforma o Protocolo de Contexto (regras `CTX-*` da Constituição) em **arquivos prontos para copiar**. Ele existe porque o maior risco de construir com IA não é código ruim — é **amnésia de contexto**: a janela estoura, a sessão seguinte não sabe o que foi decidido, e o agente refaz, desfaz ou contradiz o trabalho anterior. A cura é estrutural: **antes da primeira linha de código, cria-se a memória do projeto no repositório.** O chat é descartável; o repo é permanente.
 
@@ -106,6 +106,13 @@ NUNCA comece a codar sem os passos 1-2. NUNCA pergunte "onde paramos?" — o EST
 
 ## Bloqueios / pendências
 - {{o que falta e de quem depende}} (ex: "aguardando {{OWNER}} decidir X")
+
+## Capacidade e hardware (SCALE-CAP-01 — preencher antes do 1º cliente pagante)
+- Hardware de produção: {{CPU e núcleos FÍSICOS · RAM · tipo de disco}}
+- Último teto medido: {{req/s sustentado (p95 X ms, erro Y%) · req/s de pico · data · versão}} — teste: `{{caminho do script de carga}}`
+
+## Serviços externos (DEP-SERVICE-01)
+- {{serviço}} — conta dona: {{e-mail/org}} · plano: {{tier}} · limite que morde: {{ex: pausa após N dias inativo}} · monitor: {{sim/não}}
 
 ## Fases concluídas (1 linha cada — detalhe em docs/HISTORICO.md)
 - F1 — {{nome}} — commit `{{hash}}` — {{data}}
@@ -280,4 +287,4 @@ Regras de geração:
 
 ---
 
-*Fim do Kit de Partida v3.2 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-24). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida.*
+*Fim do Kit de Partida v3.4 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-25). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva.*
