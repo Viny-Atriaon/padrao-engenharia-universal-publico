@@ -4,13 +4,13 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 
 > 📕 **Comece pelo [GUIA-DE-USO.pdf](GUIA-DE-USO.pdf)** — explica todo o fluxo em 7 seções.
 
-## Os artefatos (v3.4)
+## Os artefatos (v3.5)
 
 | Arquivo | Papel |
 |---|---|
-| [CONSTITUICAO-ENGENHARIA-UNIVERSAL.md](CONSTITUICAO-ENGENHARIA-UNIVERSAL.md) | **A norma (v3.4).** ~160 regras com ID estável, marcadas `[M]`/`[J]`, parametrizáveis por porte, stack, time e jurisdição. |
+| [CONSTITUICAO-ENGENHARIA-UNIVERSAL.md](CONSTITUICAO-ENGENHARIA-UNIVERSAL.md) | **A norma (v3.5).** ~165 regras com ID estável, marcadas `[M]`/`[J]`, parametrizáveis por porte, stack, time e jurisdição. |
 | [HANDBOOK-ENGENHARIA-UNIVERSAL.md](HANDBOOK-ENGENHARIA-UNIVERSAL.md) | **O porquê.** 25 capítulos explicativos — consulta humana; nunca colar inteiro em sessão de IA. |
-| [CHANGELOG.md](CHANGELOG.md) | **A evolução.** O que mudou e por que em cada versão, da v2.0 até hoje; nenhuma versão é apagada — cada uma fica numa tag (`git show v3.3:ARQUIVO`). |
+| [CHANGELOG.md](CHANGELOG.md) | **A evolução.** O que mudou e por que em cada versão, da v2.0 até hoje, mais o quadro **Em preparação** (candidatas e o que destrava cada uma); nenhuma versão é apagada — cada uma fica numa tag (`git show v3.3:ARQUIVO`). |
 | [KIT-DE-PARTIDA-UNIVERSAL.md](KIT-DE-PARTIDA-UNIVERSAL.md) | **O executável.** Templates de `AGENTS.md`, `ESTADO.md`, `FASES.md`, ADR e CORRECOES + prompts de partida, retomada e instanciação. |
 | [audit.sh](audit.sh) | **O fiscal.** Auditoria automática das regras `[M]` em qualquer projeto: `bash audit.sh /caminho/do/projeto` |
 
@@ -32,6 +32,10 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 - **Pontos de restauração** — todo checkpoint entra num ledger append-only; o git guarda o conteúdo, o ledger guarda o significado; desfazer é sempre via git, nunca de memória (CTX-RESTORE-01/02/03).
 - **Regra escrita não é regra cumprida** — toda regra `[M]` roda por máquina em 4 pontos: pre-push, CI que bloqueia, verificação diária do ambiente em execução e evidência do agente antes de "pronto" (GOV-ENFORCE-01).
 
+## Novidades da v3.5
+
+Candidatas promovidas **por evidência, não por intenção**: uma varredura somente leitura em nove sistemas do mesmo ecossistema procurou prova de aplicação das dez lições pendentes. Duas tinham e entraram — `BKP-REMEDIATE-01` (expurgo do legado inseguro só após restore confirmado) e `TEST-CHAOS-01` (falha de dependência externa testada em instância descartável, nunca contra produção). As outras oito seguem no quadro **Em preparação** do [CHANGELOG.md](CHANGELOG.md), com o status encontrado e o que destrava cada uma.
+
 ## Novidades da v3.4
 
 Segunda camada da mesma auditoria — o que só apareceu ao reiniciar infraestrutura, medir sob carga e simular ataques contra o próprio sistema. Entram 5 regras (todas já aplicadas em sistema real, como exige `GOV-VERSION-01`): `SEC-CONTROL-LIVE-01` (controle de segurança sem prova de disparo é decoração), `NET-UPSTREAM-01`, `DEP-SERVICE-01` (serviço gerenciado que dorme não é produção), `HARD-CAP-01`, `OPS-RESTART-01` (porta em `Listen` pode aceitar e fechar — só conexão real conta). O **capítulo 25 do Handbook** conta as quinze lições completas e lista as dez candidatas à v3.5. Detalhe em [CHANGELOG.md](CHANGELOG.md).
@@ -49,4 +53,4 @@ Origem: auditoria de um SaaS multi-tenant em produção que tinha as regras de s
 
 ## Licença e contribuição
 
-**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.4`).
+**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5`).

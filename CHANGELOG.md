@@ -14,6 +14,43 @@ Regra de versionamento (`GOV-VERSION-01`): regra nova só entra depois de aplica
 
 ---
 
+## Em preparação — candidatas (não publicadas como regra)
+
+Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura). Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
+
+| Candidata | O que exige | Status na varredura | O que destrava |
+|---|---|---|---|
+| `OBS-INTEGRATION-01` | credencial/integração de terceiro vencida gera alerta ao usuário e ao operador | ausente em 9/9 (só `log.warn`) | implementar alerta num sistema com integração OAuth |
+| `OPS-INVENTORY-01` | inventário de serviços externos: conta dona, plano, limites, renovação | parcial em 1/9 (limites sem dono); pendência explícita em 4 | escrever o inventário e mantê-lo no `ESTADO.md` |
+| `ENC-DISK-01` | criptografia de disco verificada no host com segredos/PII | ausente em 9/9; verificado DESLIGADO no host de origem | ligar e registrar a verificação |
+| `SECRETS-INVENTORY-01` | paridade `.env` real ↔ `.env.example` ↔ leituras no código; órfãs removidas | parcial em 3/9 (validam obrigatórias no boot; um tem 12 órfãs no example) | script de paridade rodando no CI |
+| `API-SURFACE-01` | rota sem consumidor removida ou atrás de flag; flag sem leitor proibida | ausente em 9/9 | inventário rotas × consumidores + remoção |
+| `TEST-TENANT-01` | tenant/usuário de teste oficial, sinalizado, fora de métricas, cobrança e e-mails | ausente em 9/9 (um tem demo em produção sem marcação) | campo + filtros |
+| `SEC-MIGRATE-01` | modo duplo de controle de segurança com data de remoção | parcial em 1/9 (modo duplo registrado em ADR, sem data — e vivo após o prazo natural) | data no ADR + remoção executada |
+| `DB-DRIFT-01` | DDL fora de migration registrado em ledger e reconciliado | ausente em 9/9 | `docs/DRIFT.md` + reconciliação |
+| `EDGE-PROTECT-01` | anti-bot, rate limit, TLS mínimo e HSTS na borda, registrados como código/runbook | não verificável em 9/9 (só existe no painel) | exportar a configuração da borda para o repositório |
+
+---
+
+## v3.5 — 2026-10-07 — Candidatas promovidas por evidência: varredura de nove sistemas
+
+**O que mudou**
+- Constituição: +2 regras `[M]` — `BKP-REMEDIATE-01` (corrigido um backup ou controle de segurança, o legado inseguro é inventariado e expurgado só após restore confirmado no formato novo) e `TEST-CHAOS-01` (falha de dependência externa testada em instância descartável, com trava anti-produção; cache/banco/worker fora exigem staging).
+- Handbook cap. 25 atualizado: as duas lições promovidas, contra-exemplos encontrados na varredura (12 variáveis órfãs; tolerância de token viva após o prazo; demo em produção sem marcação) e a seção "Como as candidatas viram regra".
+- Este changelog ganha o quadro **Em preparação** acima, com o status de cada candidata.
+- Kit de Partida segue na v3.4 (sem mudança).
+
+**Por que**
+Depois da v3.4 ficaram dez lições documentadas sem regra, porque `GOV-VERSION-01` exige aplicação em sistema real. Em vez de esperar, fez-se uma varredura somente leitura em nove sistemas do mesmo ecossistema — construídos por outros agentes — procurando evidência concreta (arquivo e linha, script, tarefa agendada, artefato no disco) de cada candidata. Resultado: duas com prova, sete parciais ou ausentes, uma não verificável de fora. Só as duas entraram.
+
+**Origem de cada regra e ressalvas (registradas por honestidade)**
+- `BKP-REMEDIATE-01`: sistema em produção do ecossistema; 18 backups legados em claro (locais e remotos) inventariados no ledger de restauração e apagados só depois do roundtrip de restore; rotação passou a aceitar só o formato cifrado; tarefa agendada rodando, 0 artefatos em claro restantes. No sistema de origem da auditoria, a mesma correção ainda está **pendente** (aguarda decisão de expurgo).
+- `TEST-CHAOS-01`: sistema de monitoramento do ecossistema, **ainda em construção** (fase 4 de 8, não deployado): a dependência externa é derrubada pelo lado servidor numa instância descartável; trava recusa alvo de produção; 15 testes, 2 execuções verdes registradas. A regra foi escrita no escopo do que foi provado (dependência externa) — o escopo maior (cache, banco, worker) fica explícito como exigência de staging. O decisor técnico aceitou "sistema real em construção com teste executado" como aplicação válida.
+
+**Exceção registrada (`GOV-AUDIT-01`), ainda vigente:** checagens automáticas das regras novas da v3.3 em diante — prazo 2026-11-06.
+
+---
+
 ## v3.4 — 2026-10-07 — Lições operacionais: reinício, carga e defesa
 
 **O que mudou**
