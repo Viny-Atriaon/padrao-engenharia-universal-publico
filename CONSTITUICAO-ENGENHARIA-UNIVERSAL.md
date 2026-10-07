@@ -1,5 +1,5 @@
 # CONSTITUIÇÃO DE ENGENHARIA — UNIVERSAL
-**Versão 3.2 — Definitiva · Documento normativo · Validada em uso real (Filosofia §8 cumprida)**
+**Versão 3.3 — Definitiva · Documento normativo · Validada em uso real (Filosofia §8 cumprida)**
 
 Como usar — **modo preferido: a Constituição INSTANCIADA.** Gere a versão do SEU projeto (prompt no Kit de Partida §9): só as regras ativadas pelo seu `{{PORTE}}` e perfis, tipicamente 1/3 do tamanho — regra irrelevante no contexto dilui a obediência às relevantes. Este arquivo completo é a FONTE da instanciação e o fallback quando não houver instância. Regras, não explicações — racionais e equivalências de stack no **Handbook**; templates no **Kit de Partida** (`KIT-DE-PARTIDA-UNIVERSAL.md`). Cada regra tem ID estável (`DOMINIO-TEMA-NN`), nunca renumerado; cada item é `[M]` (verificável por máquina) ou `[J]` (julgamento humano).
 
@@ -129,6 +129,8 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **CODE-ENV-01 [M]** `.env` fora do repositório + `.env.example` completo e atualizado.
 - **CODE-TYPE-01 [M]** Tipagem estrita quando a linguagem suporta; `any`/equivalente proibido salvo justificativa em comentário.
 - **CODE-FAIL-01 [J]** try/catch na camada de dados; falha silenciosa proibida; UI com estados Loading/Empty/Error.
+- **CODE-ERR-02 [M]** Cliente só recebe mensagem de erro escrita de propósito (erro da aplicação); erro de terceiro, banco ou rede vai para o log e o cliente recebe mensagem genérica; erro de validação reconhecido também pelo formato (instância duplicada de módulo quebra `instanceof` e transforma 422 em 500).
+- **PERF-HOTPATH-01 [M]** Caminho quente sem I/O de disco síncrono nem consulta de configuração por requisição: chaves/config carregadas uma vez por processo; dado quase-estático (flags, plano, estado de autenticação) com cache de TTL ≤ 60 s e invalidação explícita; middleware global só faz verificação O(1).
 
 ### AppSec base
 - **SEC-SQLI-01 [M]** Queries parametrizadas via ORM/camada de acesso; concatenar input em query é proibido.
@@ -144,6 +146,9 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **SEC-REDIRECT-01 [M]** SE existe `returnUrl`/`next` ENTÃO allowlist de destino.
 - **SEC-CONSTTIME-01 [M]** Comparação constant-time para token, assinatura e API key.
 - **SEC-EMAIL-01 [M]** SE o domínio envia e-mail ENTÃO SPF + DKIM + DMARC com política de rejeição.
+- **SEC-HEADERS-02 [M]** Headers de SEC-HEADERS-01 verificados no ambiente real por tipo de resposta (HTML, assets, API, rotas embutíveis): proxy que define header por rota pode cancelar a herança dos globais.
+- **SEC-SANITIZE-01 [M]** Conteúdo rico vindo de usuário (HTML, SVG) sanitizado por allowlist no backend, na escrita E na leitura pública — a leitura neutraliza o legado salvo antes da regra.
+- **SEC-WEBHOOK-IN-01 [M]** Webhook RECEBIDO valida assinatura sobre o corpo bruto (o parser global não pode consumir o corpo antes), em tempo constante, com segredo por tenant/integração; em produção, sem segredo configurado = rejeitar; o recurso referenciado é conferido contra o tenant da integração.
 
 ### Autenticação e sessão
 - **AUTH-BUILD-01 [J]** Nunca construir auth do zero; usar solução madura da categoria em `{{CATEGORIA_FORNECEDOR}}` ou do framework.
@@ -156,6 +161,7 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **AUTH-FAILCLOSED-01 [M]** Quando store de sessão ou de rate-limit cai, rotas sensíveis falham FECHADAS, nunca abertas.
 - **AUTH-SESSION-01 [M]** SE sessão server-side ENTÃO regenerar ID de sessão no login e em elevação de privilégio.
 - **AUTH-ENUM-01 [M]** Login e signup não revelam existência de conta: mensagem e timing uniformes.
+- **AUTH-PACE-01 [M]** Login com espera progressiva entre falhas por e-mail NORMALIZADO (minúsculas + trim) e IP, além do bloqueio por conta; tentativa dentro da espera conta como abuso (RATE-LIMIT-02). Chave de bloqueio sem normalização permite contornar o limite variando maiúsculas.
 
 ### APIs expostas e webhooks emitidos
 - **API-KEY-01 [M]** SE o sistema emite chaves de API para terceiros ENTÃO: chave exibida UMA única vez na criação; armazenada apenas como hash (nunca plaintext — vazamento de banco não pode virar comprometimento de todos os clientes); prefixo identificável para suporte/log; revogável individualmente; com escopo e rate limit próprios por chave; rotação sem downtime (duas chaves ativas durante a troca).
@@ -167,6 +173,9 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **DB-STORAGE-01 [M]** Arquivos de usuário em storage dedicado, nunca no filesystem do app.
 - **DB-RLS-01 [M]** SE o banco é acessível com chave exposta no cliente ENTÃO RLS em 100% das tabelas é Nível 1.
 - **DR-PREMIG-01 [M]** Toda migração precedida de snapshot imediato + lock anti-concorrência + timeout de DDL em tabela grande.
+- **DB-INDEX-02 [M]** Índices compostos pelos padrões reais de consulta (tenant + ordenação; status + próxima execução de cron); criação em produção sem travar escrita (`CONCURRENTLY` ou equivalente); índice único só após verificar duplicatas.
+- **DB-CURSOR-01 [M]** Paginação por cursor = keyset pela ordenação real (data + id); `id < cursor` com ordenação por outra coluna é proibido (pula e repete itens).
+- **DB-POOL-01 [M]** Σ(processos × pool de conexões) ≤ 80% do limite de conexões do banco; `connect_timeout` e `pool_timeout` explícitos.
 
 ### Versionamento
 - **GIT-INIT-01 [M]** Git desde o primeiro commit; editar código direto no servidor é proibido.
@@ -177,6 +186,7 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **BKP-RET-01 [M]** Retenção mínima: 7 diários + 4 semanais.
 - **BKP-RESTORE-01 [M]** Restore testado ao menos uma vez antes do primeiro usuário real.
 - **BKP-DEADMAN-01 [M]** Cron crítico com dead man's switch (alerta quando NÃO roda); verificação de sanidade do dump (tamanho mínimo) ANTES de pingar o healthcheck.
+- **BKP-VERIFY-01 [M]** Verificação automática diária: último backup existe, é recente, está cifrado (ilegível sem a chave) e não há cópia em claro na origem nem no destino; restore re-testado após qualquer mudança no processo de backup.
 
 ### Observabilidade
 - **OBS-TRACK-01 [M]** Error tracking em frontend e backend antes do primeiro usuário.
@@ -184,6 +194,9 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **OBS-MASK-01 [M]** Data masking: segredo e PII nunca em log.
 - **OBS-HEALTH-01 [M]** `/health` público mínimo (200 + ok); health detalhado (dependências) em rota interna/autenticada.
 - **OBS-WORKER-01 [M]** Worker persiste status de erro do job ANTES de relançar exceção.
+- **OBS-WORKER-02 [M]** Todo processo de background (worker, fila, cron) tem sinal de vida checado de fora e religamento automático — não só a API; worker parado sem alerta é incidente.
+- **OBS-HEALTH-02 [M]** Quem decide reinício (watchdog/orquestrador) usa probe leve (só banco + cache) com timeout folgado e confirmação dupla; probe pesado ou dependente de terceiro nunca dispara restart.
+- **OBS-LOG-02 [M]** Rotação por tamanho e quantidade em TODO destino de log (arquivo do app, proxy, container, stdout capturado); parâmetros sensíveis de URL (token, key, secret) redigidos antes de logar.
 
 ### Segredos
 - **SECRETS-GITIGNORE-01 [M]** `.env` no `.gitignore` desde o commit 1; auditoria de vazamento no histórico.
@@ -209,6 +222,8 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **RUN-SHUTDOWN-01 [M]** Tratar sinal de término drenando requisições/jobs em andamento; job interrompido é recuperável (marcado stalled + reprocessado).
 - **RUN-QUOTA-01 [M]** SE existem cotas, limites ou operação que só pode ocorrer uma vez sob concorrência ENTÃO check-and-increment atômico (lock ou update condicional); ler-decidir-escrever é proibido.
 - **CI-HARDEN-01 [M]** SE há CI/CD ENTÃO: negar execução privilegiada disparada por contribuição externa; token de automação com menor escopo; segredo nunca em log de build; cache isolado e validado.
+- **NET-BIND-01 [M]** Processos de aplicação e serviços de dados escutam só em loopback/rede interna; a borda (CDN/túnel/proxy) é a única entrada pública; nenhuma porta de dado em `0.0.0.0`; firewall do host sem regra "permitir qualquer porta"; verificado por varredura das portas em escuta (TEST-RUNTIME-01).
+- **RES-CACHE-01 [M]** Cliente de cache/fila reconecta indefinidamente com backoff (teto ~30 s) e timeout por comando; queda do cache degrada a funcionalidade no ponto de uso em vez de virar erro 500 geral — respeitando AUTH-FAILCLOSED-01 nas rotas sensíveis.
 
 ### Camada SaaS — SE o sistema é SaaS
 - **SAAS-ADR-01 [J]** Perguntas de produto (planos, limites, cobrança, offboarding) são respondidas ANTES de codar e viram ADR; a IA pergunta ao `{{OWNER}}`, nunca decide sozinha.
@@ -220,6 +235,7 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **SAAS-OFFBOARD-01 [J]** Offboarding conforme `{{REGULACAO_DADOS}}`: export + exclusão/anonimização com prazo definido em ADR.
 - **SAAS-EMAIL-01 [M]** E-mail transacional idempotente (chave por evento — reprocessar não reenvia).
 - **SAAS-IMPERSONATE-01 [M]** Impersonation de usuário só com audit log completo (quem, quando, o quê).
+- **SAAS-IMPERSONATE-02 [M]** Token de impersonation com vida curta e revogado ao encerrar; nunca devolve privilégio maior do que o de quem iniciou.
 - **LLM-PII-01 [M]** SE envia dado a LLM/terceiro ENTÃO minimizar e mascarar o payload de saída; subprocessador registrado com base legal e localidade.
 
 ---
@@ -228,6 +244,11 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 
 - **PIPE-CICD-01 [M]** CI/CD real: build + testes + audit + deploy automatizado; deploy manual vira exceção documentada.
 - **RATE-LIMIT-01 [M]** Rate limiting: login 5 tentativas/15min; atrás de proxy, `trust proxy` configurado para IP real; resposta 429 + headers informativos.
+- **RATE-LIMIT-02 [M]** Limites em camadas: por IP (orçamento menor sem token), por usuário autenticado e por tenant derivado do TOKEN (nunca de header enviado pelo cliente); reincidência gera bloqueio temporário progressivo; contadores em store compartilhado quando há >1 processo; isenção só para faixas internas exatas (nunca a rede local inteira); kill switch por env var.
+- **RATE-LIMIT-03 [M]** IP real comprovado em produção: o log mostra IPs públicos de clientes (nunca só o do proxy/gateway); revalidado a cada mudança de proxy ou borda. Sem isso todo limite "por IP" vira um balde único da plataforma.
+- **QUEUE-ONE-01 [M]** Um nome de fila por consumidor; dois workers na mesma fila filtrando por nome de job é proibido (cada um conclui sem executar os jobs do outro).
+- **QUEUE-HYGIENE-01 [M]** Job recorrente por entidade com deduplicação; concluídos/falhos expiram por tempo e quantidade; toda chamada externa de job com timeout; integração com credencial vencida sai do ciclo curto.
+- **ENC-FIELD-01 [J]** Dado pessoal sensível (documento de identidade, data de nascimento, saúde) cifrado por campo ANTES de começar a ser coletado; busca por hash quando necessária.
 - **TEST-POSSE-01 [M]** Teste de posse com 2 contas (e 2 tenants SE multi-tenant): A não lê nem escreve dado de B.
 - **PRIV-REG-01 [J]** `{{REGULACAO_DADOS}}` by design: base legal por dado coletado, consentimento onde exigido, minimização.
 - **RUN-IDEMP-01 [M]** Idempotency keys/locks em operações de efeito externo (cobrança, e-mail, provisionamento).
@@ -244,6 +265,11 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 - **TEST-RESTORE-01 [M]** Ensaio recorrente (agendado) de restore de backup E de rollback de deploy.
 - **SCALE-DATA-01 [J]** SE crescimento sustentado de dados ENTÃO política de particionamento/arquivamento/expurgo definida antes da dor.
 - **SCALE-LOAD-01 [M]** Baseline de carga medido antes de onboarding grande (o número que o sistema aguenta hoje é conhecido).
+- **SCALE-CAP-01 [M]** `ESTADO.md` registra o hardware de produção (núcleos FÍSICOS, RAM, disco) e o último teto medido (req/s sustentado e de pico, p95, erro %, data, versão); meta de negócio é convertida em req/s ANTES de prometer capacidade — meta acima do teto do hardware se resolve com hardware, não com promessa.
+- **TEST-LOAD-01 [M]** Teste de carga versionado no repositório, com perfil de uso humano (tela = chamadas em paralelo + pausa de leitura) em rampa até a meta, abort automático e monitoramento de dano colateral; critério "com folga" registrado (p95, erro %, CPU média); roda antes de onboarding grande, após mudança de infra/desempenho/limites e a cada trimestre. Medição só com o host quieto — resultado contaminado é descartado, não reportado.
+- **TEST-ABUSE-01 [M]** Teste automatizado de regressão das defesas de abuso, contra o próprio sistema e com identidades e endereços de teste: o limite devolve 429 no ponto configurado, reincidência gera bloqueio, usuário legítimo segue atendido durante o abuso, login aplica a espera progressiva.
+- **TEST-RUNTIME-01 [M]** Auditoria do ambiente EM EXECUÇÃO (`audit-runtime.sh`: headers por tipo de resposta, arquivos sensíveis não servidos, `/health` mínimo, source maps e segredos ausentes do bundle, portas em escuta, backup cifrado e recente, IP real no log) roda após todo deploy e diariamente por agendador, com alerta em falha. Regra que só existe no código parado não está verificada.
+- **PIPE-PARITY-01 [M]** Smoke de paridade no deploy: as rotas-chave devolvem os mesmos status antes e depois; mudança em fila/worker reinicia API e worker juntos; upgrade de dependência vai em deploy separado de mudança de código.
 - **PERF-FRONT-01 [J]** SE SPA/SSR ENTÃO orçamento de performance/UX: bundle, imagens otimizadas, métricas de web vitals acompanhadas.
 
 ---
@@ -264,6 +290,7 @@ Todo sistema tem uma ordem de dependência entre camadas. Construir fora dela ge
 | SAAS-DUNNING-01 [J] | Dunning avançado | inadimplência medida acima do limiar de ADR |
 | SCALE-1-N-01 [M] | Checklist 1→N instâncias | antes de subir a 2ª instância: eliminar estado em memória, agendamento local único, locks de processo local, sessão pegajosa |
 | SCALE-EDGE-01 [J] | Multi-região / edge | latência por geografia medida e relevante ao negócio |
+| SCALE-PROC-01 [J] | Multiprocesso / cluster no mesmo host | núcleos ociosos MEDIDOS no host; medir antes e depois — se piorar, desliga (flag com default 1) |
 
 ---
 
@@ -328,11 +355,13 @@ Cada fase tem critério de passagem; falhou, não avança.
 - **IA-GUARD-01 [M]** Remover validação, rate limit, checagem de posse ou qualquer proteção existente.
 - **IA-OBSOLETE-01 [J]** Presumir que código "parece não usado" está obsoleto.
 - **IA-DESTRUCT-01 [M]** Executar comando destrutivo (drop, delete em massa, force push, rm recursivo) sem confirmação textual explícita.
+- **IA-HOSTSEC-01 [M]** Alterar configuração de segurança do sistema operacional (firewall, perfil de rede, criptografia de disco) ou apagar backup — o agente prepara o passo a passo; o humano executa.
 
 **SEMPRE:**
 - **IA-ADD-01 [J]** Preferir adicionar e depreciar a substituir e remover.
 - **IA-CONTEXT-01 [M]** Cumprir o ritual CTX-RITUAL-01 (CLAUDE.md → ESTADO.md → ADRs → CORRECOES.md) antes de mudança não-trivial.
 - **IA-FORMAT-01 [J]** Mudança estrutural proposta no formato obrigatório: **o que muda → por que → o que pode quebrar → como reverter**; aguardar aprovação antes de executar.
+- **IA-ENCODING-01 [M]** Editar arquivo só por ferramenta que preserva o encoding (UTF-8 sem BOM); proibido round-trip por shell que reinterpreta encoding; diff varrido por mojibake (`Ã£`, `â€`) antes do commit.
 - **IA-EVIDENCE-01 [M]** Toda alegação de verificação ("testei", "funciona", "build passou", "deploy ok") acompanha a EVIDÊNCIA: saída do comando, do teste ou da requisição. Alegação sem evidência = não verificado, por definição — reportar sucesso presumido é a falha nº 1 de agente e é tratada como regressão de processo.
 
 ---
@@ -349,6 +378,8 @@ Uma mudança está PRONTA quando:
 - [J] CHANGELOG/commit descrevendo o PORQUÊ em `{{IDIOMA_COMMITS}}`.
 - [M] Verificações alegadas acompanhadas de evidência (IA-EVIDENCE-01); código passa a régua LEG-HUMANO-01.
 - [J] Documentação da entrega atualizada no mesmo checkpoint (DOC-VIVA-01; DOC-API-01 SE criou/alterou endpoint).
+- [M] `audit.sh` sem violações; SE tocou infra, autenticação, limites, desempenho ou backup ENTÃO `audit-runtime.sh` verde no ambiente real (TEST-RUNTIME-01) — saída colada.
+- [M] SE mudou desempenho, escala ou limites ENTÃO teste de carga (TEST-LOAD-01) e de abuso (TEST-ABUSE-01) re-executados, resultado registrado em `ESTADO.md` (SCALE-CAP-01).
 
 ---
 
@@ -358,8 +389,9 @@ Uma mudança está PRONTA quando:
 - **GOV-VERSION-01 [J]** Gatilho de versão da Constituição: nova regra só entra após aplicada com sucesso em ≥1 sistema real (Filosofia §8) e aprovada pelo `{{DECISOR_TECNICO}}`. Mudança de regra = minor; remoção ou mudança de significado = major. IDs nunca são renumerados nem reutilizados; regra removida mantém o ID marcado como `REVOGADA`.
 - **GOV-SIZE-01 [M]** Teto de tamanho deste documento: ~430 linhas. Estourou: mover conteúdo explicativo para o Handbook antes de adicionar regra.
 - **GOV-AUDIT-01 [M]** Script de auditoria mínima (checa itens [M] automatizáveis: headers, .env, lockfile, migrations, audit de deps) é PRÉ-REQUISITO do gatilho de versão — não backlog: regra [M] nova só entra acompanhada do check correspondente ou de exceção registrada.
+- **GOV-ENFORCE-01 [M]** Regra [M] é aplicada por máquina em 4 pontos, nenhum opcional: (1) hook de pre-push roda `audit.sh` e os testes; (2) CI bloqueia merge com audit ou teste falhando; (3) agendador roda `audit-runtime.sh` diariamente contra produção e alerta em falha; (4) o agente roda ambos antes de declarar pronto e cola a saída (IA-EVIDENCE-01). Pular um ponto exige waiver com prazo (GOV-ADOPT-01); waiver vencido = violação. Regra existir no papel sem um dos 4 pontos é a falha que este item previne.
 - **GOV-ADOPT-01 [J]** Adoção em sistema existente: rodar auditoria → registrar lacunas como pendências no CLAUDE.md → priorizar Nível 1 → waivers temporários via ADR com prazo e dono, aprovados pelo `{{DECISOR_TECNICO}}`. Waiver sem prazo é inválido.
 - **GOV-LICENSE-01 [M]** Este documento pertence a `{{ORG}}`; uso interno e derivação permitidos com manutenção dos IDs para rastreabilidade.
 
 ---
-*Fim da Constituição v3.2 — Definitiva. Racionais e equivalências: Handbook. Templates e prompts (partida, retomada, instanciação): `KIT-DE-PARTIDA-UNIVERSAL.md`. Histórico: v2.0 = §CTX (anti-amnésia) + `{{PORTE}}` + Kit; v3.0 (validada em uso real) = §ORD, SCALE-READY-01, LEG-HUMANO-01, IA-EVIDENCE-01, instanciação como modo preferido; v3.1 = documentação viva (DOC-VIVA-01/DOC-API-01 — a doc nasce com a feature), APIs expostas e webhooks emitidos (API-KEY-01/WEBHOOK-OUT-01), backup comprimido+criptografado e quarentena anti-supply-chain de dependências (DEP-QUARENTENA-01/DEP-MINIMAL-01); v3.2 = pontos de restauração (CTX-RESTORE-01/02/03 — ledger append-only `docs/PONTOS-DE-RESTAURACAO.md` + savepoint pré-risco: o git guarda o conteúdo, o ledger o significado; "desfazer" nunca depende da memória do chat). Origem da v3.2: incidente real de agente que apagou código correto e não conseguiu reverter por perda de memória de sessão (GOV-POSTMORTEM-01).*
+*Fim da Constituição v3.3 — Definitiva. Racionais e equivalências: Handbook. Templates e prompts (partida, retomada, instanciação): `KIT-DE-PARTIDA-UNIVERSAL.md`. Histórico: v2.0 = §CTX (anti-amnésia) + `{{PORTE}}` + Kit; v3.0 (validada em uso real) = §ORD, SCALE-READY-01, LEG-HUMANO-01, IA-EVIDENCE-01, instanciação como modo preferido; v3.1 = documentação viva (DOC-VIVA-01/DOC-API-01 — a doc nasce com a feature), APIs expostas e webhooks emitidos (API-KEY-01/WEBHOOK-OUT-01), backup comprimido+criptografado e quarentena anti-supply-chain de dependências (DEP-QUARENTENA-01/DEP-MINIMAL-01); v3.2 = pontos de restauração (CTX-RESTORE-01/02/03 — ledger append-only `docs/PONTOS-DE-RESTAURACAO.md` + savepoint pré-risco: o git guarda o conteúdo, o ledger o significado; "desfazer" nunca depende da memória do chat). Origem da v3.2: incidente real de agente que apagou código correto e não conseguiu reverter por perda de memória de sessão (GOV-POSTMORTEM-01); v3.3 = regra executável em 4 pontos (GOV-ENFORCE-01) + auditoria do ambiente em execução (TEST-RUNTIME-01, `audit-runtime.sh`) + testes de carga e de abuso obrigatórios (TEST-LOAD-01/TEST-ABUSE-01) + capacidade registrada (SCALE-CAP-01) + limites em camadas e IP real comprovado (RATE-LIMIT-02/03, AUTH-PACE-01) + caminho quente, pool, cursor e filas (PERF-HOTPATH-01, DB-POOL-01, DB-CURSOR-01, QUEUE-ONE-01/HYGIENE-01) + rede só por loopback (NET-BIND-01) + verificação de backup cifrado (BKP-VERIFY-01) + liveness de worker (OBS-WORKER-02). Origem da v3.3: auditoria de SaaS multi-tenant em produção que tinha as regras de segurança ESCRITAS e violava várias sem perceber — backup em claro, worker parado 3 dias sem alerta, rate limit virando balde único por falta de IP real, `/health` detalhado público — porque as regras marcadas "verificação manual" nunca eram verificadas.*
