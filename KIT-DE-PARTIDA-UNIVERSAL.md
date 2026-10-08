@@ -287,4 +287,71 @@ Regras de geração:
 
 ---
 
-*Fim do Kit de Partida v3.4 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-25). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva.*
+## 10. APLICAÇÃO POR MÁQUINA — os 4 pontos da GOV-ENFORCE-01 (instalar no 1º marco)
+
+Regra escrita que ninguém roda não existe. Copie `audit.sh` e `audit-runtime.sh` deste repositório para `scripts/` do projeto (cópia versionada: o CI não enxerga este repositório) e instale os quatro pontos. Atualizar o padrão = copiar os dois scripts de novo.
+
+**Ponto 1 — `.githooks/pre-push`** (versionado; ative em cada clone com `git config core.hooksPath .githooks`):
+
+```bash
+#!/usr/bin/env bash
+set -u
+cd "$(git rev-parse --show-toplevel)" || exit 1
+echo "── pre-push: auditoria do código"
+bash scripts/audit.sh . > /tmp/pre-push-audit.txt 2>&1 || {
+  grep -E '^❌' /tmp/pre-push-audit.txt
+  echo "push bloqueado: corrija, ou registre waiver com prazo em .audit-waivers"; exit 1; }
+echo "── pre-push: testes"
+[ -d node_modules ] || { echo "push bloqueado: dependências não instaladas (os testes não puderam rodar)"; exit 1; }
+{{COMANDO_DE_TESTE}} > /tmp/pre-push-tests.txt 2>&1 || { tail -25 /tmp/pre-push-tests.txt; echo "push bloqueado: testes falhando"; exit 1; }
+```
+
+**Ponto 2 — job de CI que bloqueia** (GitHub Actions; equivalente em outro CI):
+
+```yaml
+  constituicao:
+    name: Constituição — auditoria do código e testes (bloqueia)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Auditoria do código
+        run: bash scripts/audit.sh .
+      # + instalar dependências e rodar {{COMANDO_DE_TESTE}}
+```
+
+**Ponto 3 — `scripts/audit-runtime.conf` + agendador diário** (cron/Scheduled Task rodando `bash scripts/audit-runtime.sh scripts/audit-runtime.conf`; semanal com `--abuse`). Variável vazia = checagem pulada, nunca aprovada:
+
+```bash
+RT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RT_PROJECT="{{NOME_DO_PROJETO}}"
+RT_BASE_URL="http://127.0.0.1:{{PORTA_DO_PROXY}}"     # sempre local, nunca o domínio público
+RT_API_PROBE="/api/v1/me"                             # rota da API que responde sem login (401)
+RT_EMBED_PATH=""                                      # rota que PODE ser embutida em iframe, se houver
+RT_HEALTH_PUBLIC="http://127.0.0.1:{{PORTA_DO_PROXY}}/health"
+RT_HEALTH_READY="http://127.0.0.1:{{PORTA_DA_API}}/health/ready"
+RT_DIST_DIR="$RT_ROOT/{{PASTA_DO_BUILD_PUBLICADO}}"
+RT_LOOPBACK_ONLY_PORTS="{{API}} {{BANCO}} {{CACHE}} {{PROXY}}"
+RT_BACKUP_DIR="{{PASTA_DOS_BACKUPS}}"; RT_BACKUP_GLOB="{{prefixo}}-*"; RT_BACKUP_MAX_AGE_H=26
+RT_ACCESS_LOG="{{LOG_COM_IP_POR_REQUISICAO}}"
+RT_WORKER_HEARTBEAT_FILE="{{ARQUIVO_QUE_O_WORKER_TOCA}}"; RT_WORKER_MAX_SILENCE_MIN=30
+RT_ABUSE_CMD="{{COMANDO_DA_REGRESSAO_DE_ABUSO}}"      # TEST-ABUSE-01 (só com --abuse)
+RT_ALERT_PUSH_URL=""                                  # monitor do tipo push (acusa também quando NÃO roda)
+RT_WAIVERS=""                                         # "REGRA:alvo:AAAA-MM-DD ..." (GOV-ADOPT-01)
+```
+
+**Ponto 4 — no `AGENTS.md`, seção obrigatória:**
+
+```markdown
+## Regras aplicadas por máquina (GOV-ENFORCE-01)
+Antes de declarar qualquer entrega pronta, rode e COLE a saída de `bash scripts/audit.sh .`.
+SE tocou infra, autenticação, limites, desempenho ou backup: também
+`bash scripts/audit-runtime.sh scripts/audit-runtime.conf`. SE tocou desempenho ou limites:
+também os testes de carga e de abuso, com o resultado registrado no ESTADO.md (SCALE-CAP-01).
+Exceção só por waiver com data (`.audit-waivers` ou `RT_WAIVERS`); vencido, reprova sozinho.
+```
+
+**Prove que os pontos disparam** (SEC-CONTROL-LIVE-01): uma vez, empurre para um repositório local descartável um commit com violação proposital (ex.: arquivo com `Ã£`) e confirme o bloqueio pelo motivo certo; rode o `audit-runtime.sh` com um `.conf` sabotado (porta exposta, backup em claro) e confirme o ❌.
+
+---
+
+*Fim do Kit de Partida v3.4 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-25). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara.*

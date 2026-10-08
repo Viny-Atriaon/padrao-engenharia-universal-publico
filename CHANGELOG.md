@@ -32,6 +32,25 @@ Lições observadas que **ainda não têm evidência de aplicação em sistema r
 
 ---
 
+## v3.5.1 — 2026-10-08 — Os fiscais: regra escrita passa a ser regra verificada
+
+Versão de ferramenta (patch): nenhuma regra muda de texto ou significado; regras que só existiam no papel passam a ser checadas por máquina.
+
+**O que mudou**
+- **`audit-runtime.sh` (novo)** — audita o sistema em execução: headers por tipo de resposta, dotfiles e manifestos não servidos, `/health` mínimo, probe de prontidão, source maps e segredos ausentes do build, portas que só podem escutar no loopback, backup recente e ilegível sem a chave, ausência de dump em claro, IP real chegando ao log, worker com sinal de vida, e regressão de abuso com `--abuse`. Configuração por projeto em arquivo `.conf`; variável vazia = checagem pulada, nunca aprovada. Waivers datados (`RT_WAIVERS`). Alerta por monitor do tipo push, que também acusa quando o script não roda.
+- **`audit.sh` estendido** — checagens novas: `IA-ENCODING-01` (mojibake e BOM, uma passada só), `NET-BIND-01` estático (portas do compose sem host IP), `SCALE-CAP-01`, presença versionada de `TEST-LOAD-01`/`TEST-ABUSE-01`/`TEST-RUNTIME-01`, e `GOV-ENFORCE-01` (pre-push versionado e ativado, CI rodando a auditoria). Waivers datados em `.audit-waivers`.
+- **Bugs do `audit.sh` antigo corrigidos**: migrations em monorepo não eram encontradas (`apps/*/prisma/migrations`); placeholder `sk-xxxx…` acusado como segredo real; checagem de versão do padrão falhava em texto acentuado fora de locale UTF-8 (`[aã]` compara 1 byte); worktree e submódulo eram tratados como "sem git" (o `.git` é arquivo).
+- **Kit §10** — templates dos 4 pontos de aplicação (pre-push, job de CI, `.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara.
+
+**Por que**
+`GOV-ENFORCE-01` (v3.3) exige que toda regra `[M]` rode por máquina em 4 pontos — e até aqui os scripts que a cumpririam não existiam (exceção registrada com prazo). Instalados primeiro no sistema de origem da auditoria e provados nos dois sentidos: aprovam o ambiente correto (16 ✅ no sistema rodando, 24 ✅ no código) e reprovam o errado — configuração sabotada (porta exposta, backup em claro, worker parado, waiver vencido) deu 5 ❌; push com arquivo corrompido foi barrado no pre-push pelo motivo certo. A primeira versão da checagem de encoding levava 2min41s por rodar processos por arquivo no Windows — caiu para 5,7 s; pre-push lento vira pre-push pulado.
+
+**Exceção `GOV-AUDIT-01` — situação após a v3.5.1**
+- **Com checagem automática (15):** `IA-ENCODING-01`, `NET-BIND-01`, `SCALE-CAP-01`, `TEST-LOAD-01`, `TEST-ABUSE-01`, `TEST-RUNTIME-01`, `GOV-ENFORCE-01`, `SEC-HEADERS-02`, `OBS-HEALTH-02`, `BKP-VERIFY-01`, `BKP-REMEDIATE-01`, `RATE-LIMIT-03`, `OBS-WORKER-02`, e `RATE-LIMIT-02`/`AUTH-PACE-01` pela regressão de abuso (`--abuse`).
+- **Ainda manual até 2026-11-06 (22):** `PERF-HOTPATH-01`, `DB-POOL-01`, `DB-CURSOR-01`, `DB-INDEX-02`, `QUEUE-ONE-01`, `QUEUE-HYGIENE-01`, `SEC-WEBHOOK-IN-01`, `SEC-SANITIZE-01`, `SEC-CONTROL-LIVE-01`, `NET-UPSTREAM-01`, `DEP-SERVICE-01`, `HARD-CAP-01`, `OPS-RESTART-01`, `OBS-LOG-02`, `OBS-HEALTH-02` (lado do watchdog), `RES-CACHE-01`, `CODE-ERR-02`, `PIPE-PARITY-01`, `SAAS-IMPERSONATE-02`, `TEST-CHAOS-01`, `IA-HOSTSEC-01`, `ENC-FIELD-01`. A maioria depende de como cada projeto implementa; o caminho provável é cada projeto provar a sua via teste próprio (como a regressão de abuso já faz para os limites).
+
+---
+
 ## v3.5 — 2026-10-07 — Candidatas promovidas por evidência: varredura de nove sistemas
 
 **O que mudou**

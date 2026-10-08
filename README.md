@@ -12,14 +12,15 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 | [HANDBOOK-ENGENHARIA-UNIVERSAL.md](HANDBOOK-ENGENHARIA-UNIVERSAL.md) | **O porquê.** 25 capítulos explicativos — consulta humana; nunca colar inteiro em sessão de IA. |
 | [CHANGELOG.md](CHANGELOG.md) | **A evolução.** O que mudou e por que em cada versão, da v2.0 até hoje, mais o quadro **Em preparação** (candidatas e o que destrava cada uma); nenhuma versão é apagada — cada uma fica numa tag (`git show v3.3:ARQUIVO`). |
 | [KIT-DE-PARTIDA-UNIVERSAL.md](KIT-DE-PARTIDA-UNIVERSAL.md) | **O executável.** Templates de `AGENTS.md`, `ESTADO.md`, `FASES.md`, ADR e CORRECOES + prompts de partida, retomada e instanciação. |
-| [audit.sh](audit.sh) | **O fiscal.** Auditoria automática das regras `[M]` em qualquer projeto: `bash audit.sh /caminho/do/projeto` |
+| [audit.sh](audit.sh) | **O fiscal do código.** Auditoria automática das regras `[M]` verificáveis no repositório: `bash audit.sh /caminho/do/projeto`. Roda no pre-push e no CI. |
+| [audit-runtime.sh](audit-runtime.sh) | **O fiscal do sistema rodando** (TEST-RUNTIME-01): headers reais, `/health`, portas em escuta, backup cifrado e recente, IP real no log, worker vivo; `--abuse` inclui a regressão das defesas. Roda diariamente por agendador. Configuração por projeto (Kit §10). |
 
 ## Uso em 4 passos
 
 1. Clone ou baixe este repositório (`git clone` ou Code → Download ZIP).
 2. Cole o **prompt de partida** (Kit §7) na sessão do seu agente de IA, com o porte do projeto (`site-estático` → `SaaS`).
 3. O agente cria os arquivos de memória **antes de qualquer código** e constrói por fases verticais, na ordem dados → segurança → domínio → API → front.
-4. Rode o `audit.sh` a cada marco para medir a conformidade.
+4. No primeiro marco, instale os 4 pontos de aplicação por máquina (Kit §10): `audit.sh` no pre-push e no CI, `audit-runtime.sh` no agendador diário, e o ritual de evidência no `AGENTS.md`.
 
 ## Princípios-chave
 
@@ -49,8 +50,8 @@ Origem: auditoria de um SaaS multi-tenant em produção que tinha as regras de s
 - **Desempenho e operação:** PERF-HOTPATH-01, DB-POOL-01, DB-CURSOR-01, DB-INDEX-02, QUEUE-ONE-01, QUEUE-HYGIENE-01, OBS-WORKER-02, OBS-HEALTH-02, OBS-LOG-02, RES-CACHE-01, PIPE-PARITY-01.
 - **Agentes de IA:** IA-ENCODING-01, IA-HOSTSEC-01.
 
-> **Exceção registrada (GOV-AUDIT-01), ainda vigente na v3.4:** as checagens automáticas das regras `[M]` novas ainda não estão no `audit.sh` (que continua auditando as regras da v3.2) nem no `audit-runtime.sh` previsto em TEST-RUNTIME-01. Prazo: **2026-11-06** — até lá, essas regras são verificadas manualmente no checkpoint.
+> **Exceção registrada (GOV-AUDIT-01), reduzida na v3.5.1:** 15 das 37 regras `[M]` novas (v3.3–v3.5) já têm checagem automática no `audit.sh` ou no `audit-runtime.sh`. As 22 restantes — a maioria dependente de como cada projeto implementa (pool, cursor, filas, webhooks, cache) — seguem verificadas manualmente no checkpoint até **2026-11-06**. Lista no [CHANGELOG.md](CHANGELOG.md).
 
 ## Licença e contribuição
 
-**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5`).
+**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5.1`).
