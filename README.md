@@ -4,11 +4,11 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 
 > 📕 **Comece pelo [GUIA-DE-USO.pdf](GUIA-DE-USO.pdf)** — explica todo o fluxo em 7 seções.
 
-## Os artefatos (v3.5.3)
+## Os artefatos (v3.6)
 
 | Arquivo | Papel |
 |---|---|
-| [CONSTITUICAO-ENGENHARIA-UNIVERSAL.md](CONSTITUICAO-ENGENHARIA-UNIVERSAL.md) | **A norma (v3.5).** ~165 regras com ID estável, marcadas `[M]`/`[J]`, parametrizáveis por porte, stack, time e jurisdição. |
+| [CONSTITUICAO-ENGENHARIA-UNIVERSAL.md](CONSTITUICAO-ENGENHARIA-UNIVERSAL.md) | **A norma (v3.6).** ~169 regras com ID estável, marcadas `[M]`/`[J]`, parametrizáveis por porte, stack, time e jurisdição. |
 | [HANDBOOK-ENGENHARIA-UNIVERSAL.md](HANDBOOK-ENGENHARIA-UNIVERSAL.md) | **O porquê.** 26 capítulos explicativos — consulta humana; nunca colar inteiro em sessão de IA. |
 | [CHANGELOG.md](CHANGELOG.md) | **A evolução.** O que mudou e por que em cada versão, da v2.0 até hoje, mais o quadro **Em preparação** (candidatas e o que destrava cada uma); nenhuma versão é apagada — cada uma fica numa tag (`git show v3.3:ARQUIVO`). |
 | [KIT-DE-PARTIDA-UNIVERSAL.md](KIT-DE-PARTIDA-UNIVERSAL.md) | **O executável.** Fase 0 (vale construir?), templates de `AGENTS.md`, `ESTADO.md`, `FASES.md`, ADR, CORRECOES e glossário + prompts de partida, retomada e instanciação, método de entrevista e revisão em duas frentes. |
@@ -32,6 +32,10 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 - **Quarentena de dependências** — release com menos de ~14 dias não entra (DEP-QUARENTENA-01).
 - **Pontos de restauração** — todo checkpoint entra num ledger append-only; o git guarda o conteúdo, o ledger guarda o significado; desfazer é sempre via git, nunca de memória (CTX-RESTORE-01/02/03).
 - **Regra escrita não é regra cumprida** — toda regra `[M]` roda por máquina em 4 pontos: pre-push, CI que bloqueia, verificação diária do ambiente em execução e evidência do agente antes de "pronto" (GOV-ENFORCE-01).
+
+## Novidades da v3.6
+
+**A varredura de segurança vira regra, com uma dinâmica fixa** (Kit §11): cada camada roda no seu gatilho — commit, PR e fim de fase, mudança sensível, portão antes do primeiro cliente pagante, versão grande, todo dia e trimestral — e uma camada alimenta a outra. Três camadas ganham instância padrão: a **revisão de segurança do diff da Anthropic** (`SEC-REVIEW-01`), a **auditoria do código por agentes da Cloudflare** (`SEC-AUDIT-01`) e o **ataque ao sistema rodando com o Strix** (`TEST-PENTEST-01`); `SEC-SCAN-01` amarra a cadência e o registro no `ESTADO.md`. O `audit.sh` confere as quatro. Entraram por decisão do decisor técnico antes da prova completa — exceção registrada no [CHANGELOG.md](CHANGELOG.md), com prazo.
 
 ## Novidades da v3.5.3
 
@@ -62,4 +66,4 @@ Origem: auditoria de um SaaS multi-tenant em produção que tinha as regras de s
 
 ## Licença e contribuição
 
-**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5.3`).
+**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.6`).

@@ -16,7 +16,7 @@ Regra de versionamento (`GOV-VERSION-01`): regra nova só entra depois de aplica
 
 ## Em preparação — candidatas (não publicadas como regra)
 
-Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura); as cinco seguintes entraram na v3.5.2 e ainda não foram varridas; a última, na v3.5.3, já está em primeira aplicação. Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
+Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura); as seguintes entraram na v3.5.2 e ainda não foram varridas. `SEC-AUDIT-01` e `TEST-PENTEST-01` saíram deste quadro: viraram regra na v3.6. Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
 
 | Candidata | O que exige | Status na varredura | O que destrava |
 |---|---|---|---|
@@ -30,11 +30,31 @@ Lições observadas que **ainda não têm evidência de aplicação em sistema r
 | `DB-DRIFT-01` | DDL fora de migration registrado em ledger e reconciliado | ausente em 9/9 | `docs/DRIFT.md` + reconciliação |
 | `EDGE-PROTECT-01` | anti-bot, rate limit, TLS mínimo e HSTS na borda, registrados como código/runbook | não verificável em 9/9 (só existe no painel) | exportar a configuração da borda para o repositório |
 | `DEP-AGENT-01` | skill, plugin, servidor MCP e hook do agente tratados como dependência: lidos antes de instalar, origem oficial, nome conferido, escopo de projeto por padrão, hook global só com ADR; MCP que recebe código ou dado é subprocessador (`LLM-PII-01`) | nova na v3.5.2 — ainda sem varredura | inventário do ferramental do agente no `ESTADO.md` + checagem no `audit.sh` que lista skills, hooks e servidores MCP do projeto e reprova o que não está no inventário |
-| `TEST-PENTEST-01` | teste de invasão simulado contra o sistema rodando antes do 1º cliente pagante e de versão grande; clone sem segredo, alvo local, modelo com contrato de dados | nova na v3.5.2 — ainda sem varredura | rodar num sistema real antes do 1º cliente pagante, com os achados corrigidos e registrados em `CORRECOES.md` |
 | `UX-A11Y-01` | acessibilidade mínima verificada por máquina no CI: contraste, área de toque ≥ 44 px, foco visível, `prefers-reduced-motion`, HTML semântico | nova na v3.5.2 — ainda sem varredura | verificação automática de acessibilidade no CI de um front real, com os achados zerados |
 | `IA-DOCS-01` | código específico de framework escrito a partir da documentação oficial da versão do lockfile, com a fonte citada — nunca da memória do modelo | nova na v3.5.2 — ainda sem varredura | consulta de documentação ligada no agente de um sistema real + o primeiro caso de API desatualizada registrado em `CORRECOES.md` |
 | `TEST-FIRST-01` | correção de bug começa pelo teste que falha reproduzindo o bug; o conserto vem depois | nova na v3.5.2 — ainda sem varredura | três correções seguidas num sistema real com o teste falhando antes do conserto, visível no histórico de commits |
-| `SEC-AUDIT-01` | auditoria do código por agentes com verificação adversarial (quem acha não confirma) antes do 1º cliente pagante, a cada versão grande e depois de mudança em autenticação ou isolamento; achado vira correção com teste antes (`TEST-FIRST-01`) e entrada em `CORRECOES.md` | nova na v3.5.3 — primeira aplicação em andamento (2026-10-22, um sistema do ecossistema, perfil rápido, autenticação e isolamento) | fechar os achados dessa rodada com teste e registro em `CORRECOES.md` e repetir a rodada nas mesmas áreas sem achado novo |
+
+---
+
+## v3.6 — 2026-10-22 — Varredura de segurança em camadas vira regra, com dinâmica de gatilhos
+
+Mudança de regra (minor): quatro regras novas e uma linha na Definição de Pronto.
+
+**O que mudou**
+- **`SEC-SCAN-01` [M]** (Nível 1) — varredura em camadas com cadência fixa: cada camada roda no seu gatilho (commit, PR/fim de fase, mudança sensível, antes do 1º cliente pagante, versão grande, trimestral); o `ESTADO.md` registra a última rodada de cada camada e os achados abertos; achado HIGH/CRITICAL confirmado bloqueia deploy até fechar pelo ciclo teste que falha → menor conserto → `CORRECOES.md` → mesma camada de novo.
+- **`SEC-REVIEW-01` [M]** (Nível 1) — revisão de segurança do diff por agente no fim de cada fase e em todo PR no CI, com a ação fixada por hash e só em PR de autor confiável. Instância padrão: revisão de segurança da Anthropic (`/security-review` + `anthropics/claude-code-security-review`).
+- **`SEC-AUDIT-01` [M]** (Nível 2, promovida do quadro de candidatas) — auditoria do código inteiro por agentes com verificação adversarial: completa antes do 1º cliente pagante e trimestral, com escopo após mudança sensível e a cada versão grande. Instância padrão: skill `security-audit` da Cloudflare.
+- **`TEST-PENTEST-01` [M]** (Nível 2, promovida do quadro de candidatas) — ataque ao sistema rodando por agentes contra instância local ou descartável, nunca produção, a partir de clone sem segredo e com modelo sob contrato de dados. Instância padrão: Strix.
+- **Definição de Pronto:** revisão de segurança do diff sem HIGH/CRITICAL aberto; mudança sensível com auditoria de escopo feita ou agendada.
+- **Kit §11 reescrito como a dinâmica:** 11.1 quando roda o quê (oito gatilhos, com efeito do achado), 11.2 que falha cada camada pega (e o limite honesto: regra de negócio que só o dono conhece e falha de dia zero escapam), 11.3 como rodar a revisão da Anthropic (job de CI com a ação fixada em `0c6a49f`), a auditoria da Cloudflare (commit `c1c8a8c`) e o Strix (`strix-agent==1.7.0`, modelo com contrato, alvo local) sem riscos, 11.4 o ciclo do achado ao conserto. `ESTADO.md` ganha a seção "Varreduras de segurança"; o checklist do porte sistema ganha o item 21 (SaaS renumerado 22–26).
+- **`audit.sh`** ganha as checagens das quatro regras (`GOV-AUDIT-01`): seção de varreduras no `ESTADO.md`; revisão de segurança no CI com a ação fixada por hash (tag móvel reprova); última rodada de `SEC-AUDIT-01` e de `TEST-PENTEST-01` há no máximo 92 dias (sem rodada registrada = aviso, porque a obrigação nasce com o 1º cliente pagante). Provadas nos dois sentidos numa pasta de teste e num sistema real.
+- **Handbook:** instâncias padrão na tabela de equivalências, linha nova na matriz de rastreabilidade e a dinâmica explicada no cap. 26.
+
+**Por que**
+Pedido do decisor técnico: as três ferramentas avaliadas — a revisão do diff da Anthropic, a auditoria por agentes da Cloudflare e o Strix — passam a ser obrigatórias, cada uma no seu momento, para que cada tipo conhecido de falha tenha uma camada responsável e uma data.
+
+**Exceção a `GOV-VERSION-01` (registrada, não silenciosa)**
+A Filosofia §8 exige aplicação comprovada em sistema real antes de a regra entrar. Estas entraram antes, por decisão do decisor técnico em 2026-10-22. Prova exigida até **2026-12-15**, num sistema real do ecossistema: (a) `SEC-AUDIT-01` — rodada completa com os achados fechados pelo ciclo (a primeira rodada, perfil rápido, está em andamento); (b) `TEST-PENTEST-01` — uma rodada contra instância local descartável; (c) `SEC-REVIEW-01` — a ação ligada no CI e rodando em PR. Regra sem prova no prazo volta ao quadro de candidatas (registrado aqui, sem renumerar o ID).
 
 ---
 

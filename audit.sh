@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# audit.sh — Auditoria do CÓDIGO da Constituição de Engenharia Universal v3.5
+# audit.sh — Auditoria do CÓDIGO da Constituição de Engenharia Universal v3.6
 # Cumpre GOV-AUDIT-01: verifica mecanicamente as regras [M] automatizáveis.
 # O ambiente EM EXECUÇÃO é auditado pelo audit-runtime.sh (TEST-RUNTIME-01).
 # Roda no pre-push e no CI (GOV-ENFORCE-01, pontos 1 e 2).
@@ -37,7 +37,7 @@ bad()  {
 warn() { printf "⚠️  %-24s %s\n" "$1" "$2"; WARN=$((WARN+1)); }
 
 echo "============================================================"
-echo " AUDITORIA — Constituição Universal v3.5 — $(basename "$PWD")"
+echo " AUDITORIA — Constituição Universal v3.6 — $(basename "$PWD")"
 echo "============================================================"
 
 # ---------- GIT-INIT-01: repositório git ----------
@@ -207,6 +207,47 @@ if in_git; then
     else bad "GOV-ENFORCE-01b" "CI existe mas não roda o audit.sh"; fi
   else warn "GOV-ENFORCE-01b" "sem CI — ponto 2 da GOV-ENFORCE-01 ausente"; fi
 fi
+
+# ========== v3.6: varredura de segurança em camadas (Kit §11) ==========
+
+# epoch de uma data AAAA-MM-DD (GNU date ou BSD date)
+epoch() { date -d "$1" +%s 2>/dev/null || date -j -f %Y-%m-%d "$1" +%s 2>/dev/null; }
+
+# ---------- SEC-SCAN-01: o ESTADO.md registra a última rodada de cada camada ----------
+if [ -f ESTADO.md ]; then
+  if grep -qiE '^## +Varreduras de seguran(ç|c)a' ESTADO.md; then ok "SEC-SCAN-01" "ESTADO.md registra as varreduras de segurança"
+  else bad "SEC-SCAN-01" "ESTADO.md sem a seção \"Varreduras de segurança\" (Kit §3 e §11)"; fi
+fi
+
+# ---------- SEC-REVIEW-01: revisão de segurança do diff no CI, ação fixada por hash ----------
+WFS=$(ls .github/workflows/*.yml .github/workflows/*.yaml 2>/dev/null)
+if [ -n "$WFS" ]; then
+  if grep -qsE 'claude-code-security-review@[0-9a-f]{40}' $WFS; then ok "SEC-REVIEW-01" "CI roda a revisão de segurança do diff, ação fixada por hash"
+  elif grep -qsE 'claude-code-security-review@' $WFS; then bad "SEC-REVIEW-01" "revisão de segurança no CI com tag móvel — fixe a ação por hash (PIPE-SUPPLY-01)"
+  elif grep -qsiE 'security-review' $WFS; then ok "SEC-REVIEW-01" "CI roda uma revisão de segurança do diff (instância equivalente)"
+  else bad "SEC-REVIEW-01" "CI não roda revisão de segurança do diff (Kit §11)"; fi
+else
+  warn "SEC-REVIEW-01" "sem CI — rode /security-review no fim de cada fase e registre no ESTADO.md"
+fi
+
+# ---------- SEC-AUDIT-01 / TEST-PENTEST-01: rodada registrada há no máximo 92 dias ----------
+# Primeira data de cada linha do ESTADO.md que cita a regra = "última rodada" (template do Kit §3).
+for RULE in SEC-AUDIT-01 TEST-PENTEST-01; do
+  last=""
+  if [ -f ESTADO.md ]; then
+    last=$(grep -h "$RULE" ESTADO.md | while IFS= read -r l; do printf '%s\n' "$l" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1; done | sort | tail -1)
+  fi
+  if [ -z "$last" ]; then
+    warn "$RULE" "nenhuma rodada registrada no ESTADO.md (obrigatória antes do 1º cliente pagante)"
+  else
+    now_s=$(epoch "$TODAY"); last_s=$(epoch "$last")
+    if [ -n "$now_s" ] && [ -n "$last_s" ]; then
+      age=$(( (now_s - last_s) / 86400 ))
+      if [ "$age" -le 92 ]; then ok "$RULE" "última rodada em $last ($age dias)"
+      else bad "$RULE" "última rodada em $last — passou de 92 dias (cadência trimestral, Kit §11)"; fi
+    else warn "$RULE" "última rodada em $last (não foi possível calcular a idade)"; fi
+  fi
+done
 
 # ---------- DEP-AUDIT-01 (opcional, --deps) ----------
 if [ "$DEPS" = "--deps" ] && [ -f package.json ]; then

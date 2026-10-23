@@ -1,5 +1,5 @@
 # KIT DE PARTIDA — UNIVERSAL
-**Versão 3.5.3 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
+**Versão 3.6 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
 
 Este arquivo transforma o Protocolo de Contexto (regras `CTX-*` da Constituição) em **arquivos prontos para copiar**. Ele existe porque o maior risco de construir com IA não é código ruim — é **amnésia de contexto**: a janela estoura, a sessão seguinte não sabe o que foi decidido, e o agente refaz, desfaz ou contradiz o trabalho anterior. A cura é estrutural: **antes da primeira linha de código, cria-se a memória do projeto no repositório.** O chat é descartável; o repo é permanente.
 
@@ -56,13 +56,15 @@ Tudo do app-simples, mais:
 19. [ ] Doc técnica inicializada: `docs/API.md` ou OpenAPI (DOC-API-01) — cresce a cada fase, nunca "no final"
 20. [ ] Triagem de dependências ativa: `ignore-scripts` por padrão + regra de quarentena de release (DEP-QUARENTENA-01)
 
+21. [ ] Varredura de segurança ligada (Kit §11): revisão de segurança do diff no CI com a ação fixada por hash (SEC-REVIEW-01) e a seção "Varreduras de segurança" no `ESTADO.md` (SEC-SCAN-01)
+
 ### `{{PORTE}}` = SaaS (kit sistema + camada SaaS)
 Tudo do sistema, mais:
-21. [ ] Perguntas de produto respondidas pelo `{{OWNER}}` pelo método de entrevista (§7B) e registradas em ADR (SAAS-ADR-01) — planos? trial? multi-tenant? cobrança? offboarding?
-22. [ ] SE multi-tenant: `tenant_id` no schema desde o dia 0 + scoping executável (SAAS-TENANT-02)
-23. [ ] Gateway de pagamento como fonte da verdade + webhook idempotente (esqueleto)
-24. [ ] SE emite chaves de API / envia webhooks: esqueleto conforme API-KEY-01 / WEBHOOK-OUT-01 (hash da chave, prefixo, assinatura de saída)
-25. [ ] Teste de posse com 2 contas no plano de testes
+22. [ ] Perguntas de produto respondidas pelo `{{OWNER}}` pelo método de entrevista (§7B) e registradas em ADR (SAAS-ADR-01) — planos? trial? multi-tenant? cobrança? offboarding?
+23. [ ] SE multi-tenant: `tenant_id` no schema desde o dia 0 + scoping executável (SAAS-TENANT-02)
+24. [ ] Gateway de pagamento como fonte da verdade + webhook idempotente (esqueleto)
+25. [ ] SE emite chaves de API / envia webhooks: esqueleto conforme API-KEY-01 / WEBHOOK-OUT-01 (hash da chave, prefixo, assinatura de saída)
+26. [ ] Teste de posse com 2 contas no plano de testes
 
 ---
 
@@ -138,6 +140,13 @@ NUNCA comece a codar sem os passos 1-2. NUNCA pergunte "onde paramos?" — o EST
 
 ## Serviços externos (DEP-SERVICE-01)
 - {{serviço}} — conta dona: {{e-mail/org}} · plano: {{tier}} · limite que morde: {{ex: pausa após N dias inativo}} · monitor: {{sim/não}}
+
+## Varreduras de segurança (SEC-SCAN-01 — última rodada de cada camada, Kit §11)
+| Camada | Instância (versão) | Última rodada | Achados abertos | Próxima obrigatória |
+|---|---|---|---|---|
+| Revisão do diff (SEC-REVIEW-01) | /security-review + Action Anthropic @{{hash}} | {{AAAA-MM-DD}} | {{0}} | todo PR e fim de fase |
+| Auditoria do código (SEC-AUDIT-01) | security-audit Cloudflare @{{commit}}, perfil {{quick/standard}} | {{AAAA-MM-DD}} | {{n — ver docs/CORRECOES.md}} | {{AAAA-MM-DD: trimestral ou gatilho}} |
+| Ataque ao sistema (TEST-PENTEST-01) | Strix {{versão}} | {{AAAA-MM-DD}} | {{n}} | {{AAAA-MM-DD}} |
 
 ## Fases concluídas (1 linha cada — detalhe em docs/HISTORICO.md)
 - F1 — {{nome}} — commit `{{hash}}` — {{data}}
@@ -443,43 +452,100 @@ Exceção só por waiver com data (`.audit-waivers` ou `RT_WAIVERS`); vencido, r
 
 ---
 
-## 11. VARREDURA DE SEGURANÇA EM CAMADAS (o que roda, quando, e como se corrige)
+## 11. VARREDURA DE SEGURANÇA EM CAMADAS — a dinâmica (SEC-SCAN-01, SEC-REVIEW-01, SEC-AUDIT-01, TEST-PENTEST-01)
 
-Nenhuma ferramenta pega tudo: cada camada enxerga um tipo de falha que as outras não veem. O `audit.sh` confere se a proteção **existe**; as camadas abaixo procuram se ela **funciona**. As ferramentas são exemplos — a camada é o que importa (Handbook, tabela de equivalências).
+Nenhuma ferramenta pega tudo: cada camada enxerga um tipo de falha que as outras não veem. O `audit.sh` confere se a proteção **existe**; as camadas abaixo procuram se ela **funciona**. A dinâmica tem três partes: **quando roda o quê** (gatilhos), **que falha cada camada pega** (por que juntas cobrem) e **como cada ferramenta roda sem riscos**. As instâncias padrão podem ser trocadas por equivalentes (Handbook, tabela de equivalências); a camada e o gatilho, não.
 
-| Camada | Quando | O que pega | Exemplos |
+### 11.1 Quando roda o quê
+
+| Gatilho | O que roda | Instância padrão | Efeito do achado |
 |---|---|---|---|
-| Segredos no repositório | pre-push e CI | chave ou senha commitada | gitleaks, trufflehog |
-| Dependências | todo deploy (DEP-AUDIT-01) | versão com falha conhecida | npm audit, osv-scanner |
-| Regras estáticas | CI | padrão perigoso conhecido (injeção, `eval`, regex) | Semgrep, CodeQL |
-| Revisão de segurança do diff | fim de fase, junto da revisão em duas frentes (§7C) | falha nova trazida pela mudança | `/security-review` do Claude Code, skill security-review da Sentry |
-| Auditoria do código por agentes | antes do 1º cliente pagante, a cada versão grande e depois de mexer em autenticação ou isolamento | falha de lógica, posse e isolamento que regra estática não vê | skill `security-audit` da Cloudflare |
-| Ataque ao sistema rodando | antes do 1º cliente pagante e a cada versão grande, contra alvo local | o que só aparece com o sistema no ar | Strix, OWASP ZAP |
+| Todo commit (pre-push) | auditoria do código do padrão + segredos | `audit.sh`, gitleaks | bloqueia o push |
+| Todo PR e todo fim de fase | revisão de segurança do diff (SEC-REVIEW-01) + regras estáticas + dependências | `/security-review` (fim de fase) e Action `anthropics/claude-code-security-review` (PR) da Anthropic; Semgrep ou CodeQL; npm audit ou osv-scanner | HIGH/CRITICAL bloqueia o merge |
+| Mudança sensível: autenticação, permissão, isolamento entre clientes, pagamento, upload, borda ou infraestrutura | auditoria por agentes **com escopo na área** (SEC-AUDIT-01, perfil quick); SE tocou borda, infraestrutura ou autenticação: ataque ao sistema com escopo (TEST-PENTEST-01) | skill `security-audit` da Cloudflare; Strix | confirmado bloqueia o deploy |
+| Antes do 1º cliente pagante (portão) | auditoria completa (perfil standard) + ataque completo + `audit-runtime.sh --abuse` | Cloudflare; Strix; `audit-runtime.sh` | sem as três rodadas limpas, não há cliente |
+| Versão grande | auditoria com escopo no diff entre versões + ataque contra a versão nova em instância local | Cloudflare (quick, escopo `vA..vB`); Strix | confirmado bloqueia a publicação |
+| Todo dia | sistema rodando + dependências com falha nova | `audit-runtime.sh`; osv-scanner agendado | alerta |
+| Trimestral, mesmo sem mudança | auditoria completa a partir da rodada anterior (as rodadas se somam) + ataque completo + revisão das exceções vencendo | Cloudflare (standard, ledger anterior); Strix | HIGH bloqueia o próximo deploy |
+| Depois de incidente ou de achado HIGH | a camada que achou, de novo, mais a vizinha: achado do diff → auditoria com escopo na área; achado da auditoria → ataque focado; achado do ataque → auditoria da área | as mesmas | fecha pelo ciclo (11.4) |
 
-Ferramenta de varredura também é ferramental do agente (candidata DEP-AGENT-01): ler antes de instalar, origem oficial, versão fixada, instalação no projeto — e saber para onde ela manda o código.
+As baratas rodam sempre; as caras rodam em marcos. Uma camada alimenta a outra: o diff que toca autenticação dispara a auditoria com escopo, e a auditoria que acha falha de isolamento dispara o ataque focado naquela rota.
 
-**Auditoria do código por agentes, sem riscos:**
+### 11.2 Que falha cada camada pega
+
+| Tipo de falha | Quem pega primeiro | Quem confirma |
+|---|---|---|
+| Segredo commitado | gitleaks no commit | `audit-runtime.sh` (segredo no bundle) |
+| Dependência com falha conhecida | npm audit / osv-scanner (PR e diário) | — |
+| Padrão perigoso no código (injeção, `eval`, regex lenta) | Semgrep / CodeQL no PR | revisão do diff |
+| Falha nova trazida pela mudança | revisão do diff da Anthropic (PR e fim de fase) | auditoria com escopo |
+| Lógica, posse, isolamento entre clientes, escalada de permissão | auditoria por agentes da Cloudflare | teste do projeto (o "precisa validar" vira teste) |
+| Configuração, cabeçalho, cookie, proxy, borda | Strix contra o sistema rodando | `audit-runtime.sh` |
+| Abuso e limites | regressão de abuso (TEST-ABUSE-01) | Strix |
+| O que ninguém previu | rodada trimestral (as rodadas se somam) | incidente → post-mortem → regra (GOV-POSTMORTEM-01) |
+
+Nenhuma combinação garante pegar qualquer falha: regra de negócio que só o dono conhece e falha de dia zero em dependência escapam. O que a dinâmica garante é que **cada tipo conhecido de falha tem uma camada responsável e uma data**, e que o que escapou volta como regra.
+
+### 11.3 Como cada ferramenta roda sem riscos
+
+Ferramenta de varredura é ferramental do agente (candidata DEP-AGENT-01): lida antes de instalar, origem oficial, versão fixada, instalada no projeto — e você sabe para onde ela manda o código.
+
+**Revisão do diff — Anthropic (SEC-REVIEW-01).** No fim de cada fase, rode `/security-review` no Claude Code. No CI, um job por PR com a ação **fixada por hash** (PIPE-SUPPLY-01; o README dela usa `@main`):
+
+```yaml
+  revisao-de-seguranca:
+    if: github.event.pull_request.head.repo.full_name == github.repository   # só PR do próprio repositório
+    runs-on: ubuntu-latest
+    permissions: { contents: read, pull-requests: write }
+    steps:
+      - uses: actions/checkout@{{hash}}
+        with: { ref: "${{ github.event.pull_request.head.sha }}", fetch-depth: 2 }
+      - uses: anthropics/claude-code-security-review@0c6a49f1fa56a1d472575da86a94dbc1edb78eda   # 2026-02-11
+        with:
+          claude-api-key: ${{ secrets.CLAUDE_API_KEY }}
+          comment-pr: true
+          exclude-directories: node_modules,dist,.next
+```
+
+A ação não é blindada contra injeção de prompt: em repositório com contribuição externa, ligue "Require approval for all external contributors" e nunca rode em PR de fork. A chave da API fica em secret do CI, com escopo e orçamento próprios (COST-API-01).
+
+**Auditoria do código por agentes — Cloudflare (SEC-AUDIT-01).**
 
 ```text
 1. Instale fixando a versão, só no projeto e fora do git:
    clone https://github.com/cloudflare/security-audit-skill numa pasta temporária,
-   copie skills/security-audit para .claude/skills/security-audit/ do projeto
-   e acrescente .claude/skills/security-audit/ ao .git/info/exclude.
-2. Peça: "Rode uma auditoria de segurança, perfil quick, escopo {{áreas, ex.: autenticação
-   e isolamento de dados}}, orçamento de {{N}} agentes, saída fora do repositório.
-   Não execute código do projeto fora de sandbox, nunca abra o .env e não toque no
-   sistema publicado."
-3. Leia REPORT.md e NEEDS-VALIDATION.md na pasta de saída.
+   confira o commit (última revisão lida: c1c8a8c), copie skills/security-audit para
+   .claude/skills/security-audit/ do projeto e acrescente essa pasta ao .git/info/exclude.
+2. Peça: "Rode uma auditoria de segurança, perfil {{quick|standard}}, escopo {{áreas, ex.:
+   autenticação e isolamento de dados | diff vA..vB | tudo}}, orçamento de {{N}} agentes,
+   saída fora do repositório. Use a rodada anterior se existir. Não execute código do
+   projeto fora de sandbox, nunca abra o .env e não toque no sistema publicado."
+3. Leia REPORT.md e NEEDS-VALIDATION.md na pasta de saída e registre a rodada no ESTADO.md.
 ```
 
-Sem sandbox do sistema operacional (rede cortada, ambiente vazio, escrita só em pasta temporária, limite de CPU e memória), a skill não executa o código do projeto e marca como "precisa validar" o que dependeria de execução, já com o teste que resolveria. Uma rodada acha cerca de metade do que rodadas repetidas acham; elas se somam.
+Sem sandbox do sistema operacional (rede cortada, ambiente vazio, escrita só em pasta temporária, limite de CPU e memória), ela não executa o código do projeto e marca como "precisa validar" o que dependeria de execução, já com o teste que resolveria. No Windows, os validadores dela recusam ler arquivos (exigem proteção de leitura que só Linux e macOS têm): rode a auditoria no WSL2/Linux, ou chame as funções exportadas dos validadores com leitura simples, já que os arquivos validados são escritos pelo próprio coordenador.
 
-**Do achado ao conserto — a ferramenta acha, quem corrige é o ciclo:**
+**Ataque ao sistema rodando — Strix (TEST-PENTEST-01).**
+
+```text
+1. Docker ligado. Instale pelo registro oficial, em versão com mais de 14 dias
+   (DEP-QUARENTENA-01): uv tool install strix-agent==1.7.0   (ou pipx)
+2. Modelo sob contrato de tratamento de dados — nunca o padrão do guia que manda o código
+   para terceiro sem contrato: STRIX_LLM="anthropic/{{modelo}}" e LLM_API_KEY no ambiente
+   da sessão (PowerShell: $env:STRIX_LLM=...; Git Bash: export STRIX_LLM=...).
+3. Alvo: um clone SEM .env e uma instância local descartável com dados fictícios
+   (strix --target ./clone-sem-segredos e/ou a URL local dessa instância).
+   Nunca a URL de produção, nunca um túnel público.
+4. Achados no relatório do Strix → registre no ESTADO.md e feche pelo ciclo (11.4).
+```
+
+### 11.4 Do achado ao conserto — a ferramenta acha, quem corrige é o ciclo
+
 1. Para cada achado confirmado ou "precisa validar", escreva primeiro o teste que reproduz a falha e veja ele falhar.
 2. Aplique o menor conserto recomendado, no último ponto de decisão confiável. Para aplicar os achados de uma revisão do diff, o `/code-review --fix` do Claude Code ajuda — revise o que ele mudou antes do commit.
 3. Teste verde, entrada em `docs/CORRECOES.md` (sintoma → causa → conserto → teste) e ponto de restauração.
-4. Rode de novo a camada que achou a falha, para confirmar que fechou e que o conserto não abriu outra.
+4. Rode de novo a camada que achou a falha, para confirmar que fechou e que o conserto não abriu outra; atualize a linha da camada em "Varreduras de segurança" no `ESTADO.md`.
 
 ---
 
-*Fim do Kit de Partida v3.5.3 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-26). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara. v3.5.2: §0 Fase 0 (vale construir?), §6C glossário do domínio, §7B método de entrevista, §7C revisão em duas frentes, "Fora do escopo" e MVP em uma frase no `FASES.md`, retro de uma linha no fim da sessão, prévia de link no checklist do site e a versão do padrão como `{{VERSAO_PADRAO}}` nos prompts — nada disso é regra nova; é método para cumprir as que já existem. v3.5.3: §11 varredura de segurança em camadas (segredos, dependências, regras estáticas, revisão do diff, auditoria do código por agentes, ataque ao sistema rodando), o passo a passo para rodar a auditoria por agentes sem riscos e o ciclo do achado ao conserto.*
+*Fim do Kit de Partida v3.6 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-26). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara. v3.5.2: §0 Fase 0 (vale construir?), §6C glossário do domínio, §7B método de entrevista, §7C revisão em duas frentes, "Fora do escopo" e MVP em uma frase no `FASES.md`, retro de uma linha no fim da sessão, prévia de link no checklist do site e a versão do padrão como `{{VERSAO_PADRAO}}` nos prompts — nada disso é regra nova; é método para cumprir as que já existem. v3.5.3: §11 varredura de segurança em camadas (segredos, dependências, regras estáticas, revisão do diff, auditoria do código por agentes, ataque ao sistema rodando), o passo a passo para rodar a auditoria por agentes sem riscos e o ciclo do achado ao conserto. v3.6: §11 vira a dinâmica das regras SEC-SCAN-01, SEC-REVIEW-01, SEC-AUDIT-01 e TEST-PENTEST-01 — quando roda o quê (gatilhos), que falha cada camada pega e como rodar a revisão da Anthropic, a auditoria da Cloudflare e o Strix sem riscos; `ESTADO.md` ganha "Varreduras de segurança"; checklist do porte sistema ganha o item 21 (SaaS renumerado 22–26).*
