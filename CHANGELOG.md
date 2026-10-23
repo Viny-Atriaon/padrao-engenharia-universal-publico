@@ -16,7 +16,7 @@ Regra de versionamento (`GOV-VERSION-01`): regra nova só entra depois de aplica
 
 ## Em preparação — candidatas (não publicadas como regra)
 
-Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura); as cinco últimas entraram na v3.5.2 e ainda não foram varridas. Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
+Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura); as cinco seguintes entraram na v3.5.2 e ainda não foram varridas; a última, na v3.5.3, já está em primeira aplicação. Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
 
 | Candidata | O que exige | Status na varredura | O que destrava |
 |---|---|---|---|
@@ -34,6 +34,21 @@ Lições observadas que **ainda não têm evidência de aplicação em sistema r
 | `UX-A11Y-01` | acessibilidade mínima verificada por máquina no CI: contraste, área de toque ≥ 44 px, foco visível, `prefers-reduced-motion`, HTML semântico | nova na v3.5.2 — ainda sem varredura | verificação automática de acessibilidade no CI de um front real, com os achados zerados |
 | `IA-DOCS-01` | código específico de framework escrito a partir da documentação oficial da versão do lockfile, com a fonte citada — nunca da memória do modelo | nova na v3.5.2 — ainda sem varredura | consulta de documentação ligada no agente de um sistema real + o primeiro caso de API desatualizada registrado em `CORRECOES.md` |
 | `TEST-FIRST-01` | correção de bug começa pelo teste que falha reproduzindo o bug; o conserto vem depois | nova na v3.5.2 — ainda sem varredura | três correções seguidas num sistema real com o teste falhando antes do conserto, visível no histórico de commits |
+| `SEC-AUDIT-01` | auditoria do código por agentes com verificação adversarial (quem acha não confirma) antes do 1º cliente pagante, a cada versão grande e depois de mudança em autenticação ou isolamento; achado vira correção com teste antes (`TEST-FIRST-01`) e entrada em `CORRECOES.md` | nova na v3.5.3 — primeira aplicação em andamento (2026-10-22, um sistema do ecossistema, perfil rápido, autenticação e isolamento) | fechar os achados dessa rodada com teste e registro em `CORRECOES.md` e repetir a rodada nas mesmas áreas sem achado novo |
+
+---
+
+## v3.5.3 — 2026-10-22 — Varredura de segurança em camadas
+
+Versão de método (patch): nenhuma regra muda de texto ou significado.
+
+**O que mudou**
+- **Kit §11 — varredura de segurança em camadas:** seis camadas com o momento de cada uma — segredos no repositório, dependências, regras estáticas, revisão de segurança do diff, auditoria do código por agentes e ataque ao sistema rodando —, o passo a passo para rodar a auditoria por agentes sem riscos (versão fixada, só no projeto, fora do git, saída fora do repositório, sem tocar no sistema publicado) e o ciclo do achado ao conserto (teste que falha primeiro, menor conserto, `CORRECOES.md`, a mesma camada de novo).
+- **Handbook:** cinco linhas novas na tabela de equivalências (segredos, regras estáticas, revisão do diff, auditoria por agentes, invasão simulada) e uma seção no cap. 26 explicando por que nenhuma ferramenta basta sozinha.
+- **Candidata nova `SEC-AUDIT-01`** no quadro acima.
+
+**Por que**
+O padrão diz o que tem de existir e o `audit.sh` confere se existe; faltava quem perguntasse se funciona. Cada ferramenta de varredura enxerga um tipo de falha que as outras não veem, então elas entram juntas, cada uma no seu momento. A auditoria por agentes foi avaliada lendo todos os arquivos dela antes de usar (só instruções e dois validadores que leem arquivos, sem rede e sem execução) e está sendo aplicada pela primeira vez num sistema real — é essa aplicação que pode promover `SEC-AUDIT-01`.
 
 ---
 

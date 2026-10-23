@@ -4,7 +4,7 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 
 > 📕 **Comece pelo [GUIA-DE-USO.pdf](GUIA-DE-USO.pdf)** — explica todo o fluxo em 7 seções.
 
-## Os artefatos (v3.5.2)
+## Os artefatos (v3.5.3)
 
 | Arquivo | Papel |
 |---|---|
@@ -33,6 +33,10 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 - **Pontos de restauração** — todo checkpoint entra num ledger append-only; o git guarda o conteúdo, o ledger guarda o significado; desfazer é sempre via git, nunca de memória (CTX-RESTORE-01/02/03).
 - **Regra escrita não é regra cumprida** — toda regra `[M]` roda por máquina em 4 pontos: pre-push, CI que bloqueia, verificação diária do ambiente em execução e evidência do agente antes de "pronto" (GOV-ENFORCE-01).
 
+## Novidades da v3.5.3
+
+**Varredura de segurança em camadas** (Kit §11): segredos no repositório, dependências, regras estáticas, revisão de segurança do diff, auditoria do código por agentes e ataque ao sistema rodando — cada uma com o seu momento, porque nenhuma ferramenta pega tudo. Inclui o passo a passo para rodar a auditoria por agentes sem riscos e o ciclo do achado ao conserto (teste que falha primeiro, menor conserto, registro em `CORRECOES.md`, a mesma camada de novo). Candidata nova `SEC-AUDIT-01`, já em primeira aplicação.
+
 ## Novidades da v3.5.2
 
 Versão de método — nenhuma regra muda. O padrão passa a cobrir o que vem **antes e em volta do código**: a **Fase 0** (conselho de cinco pareceres, ficha da ideia e testes baratos antes de decidir construir), o **método de entrevista** (o agente descobre os fatos sozinho e leva ao dono só as decisões, em rodadas, cada pergunta com a resposta recomendada), a **revisão em duas frentes** para quem trabalha sozinho, o **glossário do domínio**, o **"Fora do escopo"** no plano de fases e uma **retro de uma linha** no fim da sessão. Tudo no Kit e no capítulo 26 do Handbook. Cinco candidatas novas no quadro **Em preparação** do [CHANGELOG.md](CHANGELOG.md) — entre elas `DEP-AGENT-01`: skill, plugin, servidor MCP e hook do agente tratados como dependência.
@@ -58,4 +62,4 @@ Origem: auditoria de um SaaS multi-tenant em produção que tinha as regras de s
 
 ## Licença e contribuição
 
-**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5.2`).
+**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5.3`).

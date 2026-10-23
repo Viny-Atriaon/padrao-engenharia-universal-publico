@@ -1,5 +1,5 @@
 # KIT DE PARTIDA — UNIVERSAL
-**Versão 3.5.2 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
+**Versão 3.5.3 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
 
 Este arquivo transforma o Protocolo de Contexto (regras `CTX-*` da Constituição) em **arquivos prontos para copiar**. Ele existe porque o maior risco de construir com IA não é código ruim — é **amnésia de contexto**: a janela estoura, a sessão seguinte não sabe o que foi decidido, e o agente refaz, desfaz ou contradiz o trabalho anterior. A cura é estrutural: **antes da primeira linha de código, cria-se a memória do projeto no repositório.** O chat é descartável; o repo é permanente.
 
@@ -443,4 +443,43 @@ Exceção só por waiver com data (`.audit-waivers` ou `RT_WAIVERS`); vencido, r
 
 ---
 
-*Fim do Kit de Partida v3.5.2 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-26). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara. v3.5.2: §0 Fase 0 (vale construir?), §6C glossário do domínio, §7B método de entrevista, §7C revisão em duas frentes, "Fora do escopo" e MVP em uma frase no `FASES.md`, retro de uma linha no fim da sessão, prévia de link no checklist do site e a versão do padrão como `{{VERSAO_PADRAO}}` nos prompts — nada disso é regra nova; é método para cumprir as que já existem.*
+## 11. VARREDURA DE SEGURANÇA EM CAMADAS (o que roda, quando, e como se corrige)
+
+Nenhuma ferramenta pega tudo: cada camada enxerga um tipo de falha que as outras não veem. O `audit.sh` confere se a proteção **existe**; as camadas abaixo procuram se ela **funciona**. As ferramentas são exemplos — a camada é o que importa (Handbook, tabela de equivalências).
+
+| Camada | Quando | O que pega | Exemplos |
+|---|---|---|---|
+| Segredos no repositório | pre-push e CI | chave ou senha commitada | gitleaks, trufflehog |
+| Dependências | todo deploy (DEP-AUDIT-01) | versão com falha conhecida | npm audit, osv-scanner |
+| Regras estáticas | CI | padrão perigoso conhecido (injeção, `eval`, regex) | Semgrep, CodeQL |
+| Revisão de segurança do diff | fim de fase, junto da revisão em duas frentes (§7C) | falha nova trazida pela mudança | `/security-review` do Claude Code, skill security-review da Sentry |
+| Auditoria do código por agentes | antes do 1º cliente pagante, a cada versão grande e depois de mexer em autenticação ou isolamento | falha de lógica, posse e isolamento que regra estática não vê | skill `security-audit` da Cloudflare |
+| Ataque ao sistema rodando | antes do 1º cliente pagante e a cada versão grande, contra alvo local | o que só aparece com o sistema no ar | Strix, OWASP ZAP |
+
+Ferramenta de varredura também é ferramental do agente (candidata DEP-AGENT-01): ler antes de instalar, origem oficial, versão fixada, instalação no projeto — e saber para onde ela manda o código.
+
+**Auditoria do código por agentes, sem riscos:**
+
+```text
+1. Instale fixando a versão, só no projeto e fora do git:
+   clone https://github.com/cloudflare/security-audit-skill numa pasta temporária,
+   copie skills/security-audit para .claude/skills/security-audit/ do projeto
+   e acrescente .claude/skills/security-audit/ ao .git/info/exclude.
+2. Peça: "Rode uma auditoria de segurança, perfil quick, escopo {{áreas, ex.: autenticação
+   e isolamento de dados}}, orçamento de {{N}} agentes, saída fora do repositório.
+   Não execute código do projeto fora de sandbox, nunca abra o .env e não toque no
+   sistema publicado."
+3. Leia REPORT.md e NEEDS-VALIDATION.md na pasta de saída.
+```
+
+Sem sandbox do sistema operacional (rede cortada, ambiente vazio, escrita só em pasta temporária, limite de CPU e memória), a skill não executa o código do projeto e marca como "precisa validar" o que dependeria de execução, já com o teste que resolveria. Uma rodada acha cerca de metade do que rodadas repetidas acham; elas se somam.
+
+**Do achado ao conserto — a ferramenta acha, quem corrige é o ciclo:**
+1. Para cada achado confirmado ou "precisa validar", escreva primeiro o teste que reproduz a falha e veja ele falhar.
+2. Aplique o menor conserto recomendado, no último ponto de decisão confiável. Para aplicar os achados de uma revisão do diff, o `/code-review --fix` do Claude Code ajuda — revise o que ele mudou antes do commit.
+3. Teste verde, entrada em `docs/CORRECOES.md` (sintoma → causa → conserto → teste) e ponto de restauração.
+4. Rode de novo a camada que achou a falha, para confirmar que fechou e que o conserto não abriu outra.
+
+---
+
+*Fim do Kit de Partida v3.5.3 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-26). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara. v3.5.2: §0 Fase 0 (vale construir?), §6C glossário do domínio, §7B método de entrevista, §7C revisão em duas frentes, "Fora do escopo" e MVP em uma frase no `FASES.md`, retro de uma linha no fim da sessão, prévia de link no checklist do site e a versão do padrão como `{{VERSAO_PADRAO}}` nos prompts — nada disso é regra nova; é método para cumprir as que já existem. v3.5.3: §11 varredura de segurança em camadas (segredos, dependências, regras estáticas, revisão do diff, auditoria do código por agentes, ataque ao sistema rodando), o passo a passo para rodar a auditoria por agentes sem riscos e o ciclo do achado ao conserto.*
