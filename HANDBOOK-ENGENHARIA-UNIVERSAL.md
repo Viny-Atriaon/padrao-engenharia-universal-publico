@@ -77,7 +77,7 @@ Para um padrão que se pretende compartilhável, uma licença *copyleft* de atri
 
 > Um dev solo criando uma API-only sem multi-tenancy, deploy em PaaS, sem LLM:
 > - Preenche `{{TAMANHO_TIME}}=Solo`, `{{TIPO_APP}}=API-only`, `{{MULTI_TENANT}}=não`, `{{MODELO_DEPLOY}}=PaaS`, `{{EXPOE_LLM}}=não`.
-> - Perfil Solo: code review vira auto-review com IA (`○`→IA), CI/CD vira script local robusto (`◐`), branch protection dispensado (`○`).
+> - Perfil Solo: code review vira auto-review com IA em duas frentes (`○`→IA, Kit §7C), CI/CD vira script local robusto (`◐`), branch protection dispensado (`○`).
 > - Perfil PaaS: `HARD-BASE-01` (hardening de servidor) é delegado ao provedor (`○`), mas `BKP-*` continua `●` — PaaS não te isenta de backup dos dados.
 > - Bloco SAAS-* inteiro fica inativo (não é SaaS). `LLM-*` inativo.
 > - Resultado: uma Constituição instanciada de ~1/3 do tamanho, focada no que importa pra ele. Se amanhã ele adicionar planos pagos, reativa o bloco SaaS e trata cada regra como pendência nova.
@@ -995,7 +995,7 @@ O que protege um time de 20 pode paralisar um dev solo, e o que basta para um so
 
 | Prática | Solo | 2-5 | 6-15 | 15+ |
 |---|---|---|---|---|
-| **Review humano em PR** | auto-review com IA | 1 aprovador | obrigatório | obrigatório |
+| **Review humano em PR** | auto-review com IA em duas frentes (Kit §7C) | 1 aprovador | obrigatório | obrigatório |
 | **Branch protection / trunk rules** | dispensado | ligado | ligado | ligado |
 | **CI/CD** | script local robusto | real | real | real |
 | **CODEOWNERS** | — | opcional | recomendado | obrigatório |
@@ -1225,6 +1225,81 @@ O agendador roda `audit-runtime.sh` às 6h: falha em `BKP-VERIFY-01` (último du
 
 ---
 
+## CAPÍTULO 26 — Antes e em volta do código: decidir, entrevistar, cortar escopo, revisar e aprender (novo na v3.5.2)
+
+> Explica: o Kit §0 (Fase 0), §6C (glossário do domínio), §7B (método de entrevista), §7C (revisão em duas frentes), o "Fora do escopo" do `FASES.md` e a retro do fim de sessão — método para cumprir `SAAS-ADR-01`, `CTX-FASE-01`, `CTX-RITUAL-01`, `CTX-FONTE-01` e o perfil Solo, sem regra nova. Apresenta também as cinco candidatas da v3.5.2.
+
+### Por que existe
+
+O padrão cuida bem do que acontece depois que se decide construir: memória, ordem, segurança, prova. Ficavam descobertos três momentos em que o projeto se perde antes de ter um bug sequer:
+
+- **Antes do kit:** construir algo que não devia existir, ou que devia existir de outro jeito. O kit evita a amnésia; não evita o projeto errado.
+- **Na conversa com o dono:** "me pergunte o que não souber", sem método, produz pergunta solta (as decisões ficam implícitas) ou questionário de trinta itens (respostas no automático). As duas deixam suposição silenciosa, que volta como retrabalho.
+- **No fim da fase, para quem trabalha sozinho:** o perfil Solo troca o review humano por "auto-review com IA" sem dizer como. O mesmo agente, com o mesmo contexto, relendo o próprio diff, tende a aprovar o que acabou de escrever.
+
+Tudo aqui saiu de uso real — o conselho de agentes antes de projeto novo é prática corrente — ou de métodos abertos de engenharia com agentes já muito usados, adaptados ao vocabulário do padrão.
+
+### Fase 0: o conselho e a ficha (Kit §0)
+
+O conselho de cinco pareceres funciona porque separa papéis: quem defende não precisa ser equilibrado, quem ataca também não, e o juiz só pesa. Pareceres independentes (agentes que não leem uns aos outros) evitam que o primeiro contamine os demais. A ficha de sete critérios dá números comparáveis entre ideias, e os três testes baratos trocam opinião por evidência antes do primeiro commit.
+
+O detalhe mais importante é o último: **o parecer é entrada, não decisão.** O dono pode decidir contra o placar; o que não pode é decidir sem ter olhado. E um conselho novo não revoga decisão registrada: se a ideia já foi aprovada em ADR, o parecer vira argumento para um ADR que a substitua, nunca uma reversão silenciosa.
+
+### Método de entrevista (Kit §7B)
+
+Três ideias fazem o método funcionar:
+1. **A rodada leva tudo que já dá para perguntar.** Decisão tem dependência: não adianta perguntar o preço do plano antes de saber se haverá planos. Perguntar de uma vez tudo que está desbloqueado, e só isso, dá ritmo sem atropelar.
+2. **Toda pergunta traz a resposta recomendada.** O dono reage a uma proposta em vez de inventar do zero; "sim" vira resposta válida, e a recomendação expõe o raciocínio do agente para ser corrigido.
+3. **Fato é do agente, decisão é do dono.** Perguntar qual ORM o projeto usa, com o arquivo de dependências na pasta, gasta a paciência que devia ir para as escolhas de verdade.
+
+O que sai da entrevista vai para os arquivos-donos de sempre (ADR, `ESTADO.md`), e os termos de negócio, para o glossário.
+
+### Glossário do domínio (Kit §6C)
+
+Sistema com vocabulário próprio (jurídico, público, saúde, financeiro) acumula sinônimos: a mesma coisa ganha três nomes na tela, na tabela e no código, e a próxima sessão do agente inventa o quarto. O glossário é o arquivo-dono dos termos, no espírito do `CTX-FONTE-01`. Nasce com o primeiro termo definido, para não ser mais um arquivo vazio no kit.
+
+### "Fora do escopo" e o MVP em uma frase (Kit §4)
+
+Escopo cresce por pedidos pequenos e razoáveis no meio da fase. A seção "Fora do escopo" dá um lugar para eles, com o motivo e o gatilho para reavaliar, e a fase em andamento consegue terminar. A frase do MVP ("o usuário consegue X e obtém Y em menos de Z minutos") é o critério do que é essencial: o que não serve a essa frase espera.
+
+### Revisão em duas frentes (Kit §7C)
+
+Quem implementa trabalha sob pressão de contexto: explorou, errou, corrigiu, e carrega tudo isso. Quem revisa recebe só o diff e o documento da sua frente, chega limpo e enxerga o que passou. Separar as frentes também importa: "obedece ao padrão?" e "entrega a fase?" são perguntas diferentes, e um agente fazendo as duas tende a responder bem só uma. É a forma executável do "auto-review com IA" do perfil Solo (capítulo 20).
+
+### Retro de uma linha
+
+O padrão evolui pela prática (Filosofia §8), mas até aqui só incidente grave (`GOV-POSTMORTEM-01`) virava aprendizado registrado. A retro de uma linha no fim da sessão pega o atrito pequeno e repetido: o agente que sempre se perde no mesmo módulo, a checagem que sempre falha pelo mesmo motivo. Anotado com o prefixo `processo:`, vira matéria-prima para checagem automática, para uma linha no `AGENTS.md` ou para candidata ao padrão.
+
+### As cinco candidatas da v3.5.2
+
+Entraram no quadro "Em preparação" do `CHANGELOG.md`, não na Constituição: nenhuma foi aplicada ainda num sistema real, como exige `GOV-VERSION-01`, e a Constituição está perto do teto de `GOV-SIZE-01`. As ferramentas citadas são **exemplos ilustrativos**; a candidata exige a capacidade.
+
+- **`DEP-AGENT-01` — o ferramental do agente é dependência.** Skill, plugin, servidor MCP e hook entram no projeto com o cuidado de um pacote: lidos antes de instalar (são instruções que o agente vai seguir, e hook roda comando sem perguntar), origem oficial, nome conferido letra a letra, instalação no escopo do projeto por padrão, hook global só com ADR. Servidor MCP que recebe código ou dado é subprocessador (`LLM-PII-01`). É a lacuna mais exposta: o padrão trata dependência de código com triagem e quarentena (`DEP-QUARENTENA-01`) e não dizia nada sobre o que se instala no próprio agente.
+- **`TEST-PENTEST-01` — teste de invasão simulado.** Antes do primeiro cliente pagante e de cada versão grande, o sistema rodando é atacado de propósito (categoria: pentest automatizado com agentes de IA, ou varredura dinâmica como o OWASP ZAP). Num clone sem segredo, contra alvo local, com modelo que tenha contrato de tratamento de dados — o código vai para ele.
+- **`UX-A11Y-01` — acessibilidade mínima verificada por máquina.** Contraste, área de toque de pelo menos 44 px, foco visível, respeito a `prefers-reduced-motion` e HTML semântico, checados no CI (categoria: axe-core, Lighthouse). O padrão não tinha nenhuma regra de acessibilidade; `PERF-FRONT-01` só cobre desempenho.
+- **`IA-DOCS-01` — documentação da versão instalada.** Antes de escrever código específico de framework, o agente consulta a documentação oficial da versão que está no lockfile, não a que lembra do treino, e cita a fonte. API que mudou entre versões explica boa parte do código "que parecia certo".
+- **`TEST-FIRST-01` — correção de bug começa pelo teste que falha.** `LEG-CORRECOES-01` já pede teste de regressão; a candidata exige a ordem: o teste vem antes, falha reproduzindo o bug, e só então vem o conserto. Teste escrito depois às vezes passa sem nunca ter falhado, e aí não prova nada.
+
+### Quando NÃO aplicar
+
+- **Fase 0 em trabalho encomendado.** Cliente com escopo fechado já decidiu que vale; o conselho ali é cerimônia.
+- **Entrevista para decisão trivial ou reversível em minutos.** O agente decide, registra no `ESTADO.md` e segue.
+- **Revisão em duas frentes em fase de texto ou ajuste visual.** Ela existe para diff que muda comportamento.
+
+### Erros comuns
+
+- **Convocar o conselho para confirmar o que já se decidiu.** Se o resultado não pode mudar nada, não convoque.
+- **Entrevista que pergunta fato.** "Qual banco o projeto usa?" com o schema no repositório é falha do agente, não dúvida do dono.
+- **Revisor com o histórico da implementação.** Se o revisor recebe a conversa inteira, herda a mesma cegueira. Só o diff e o documento da frente.
+- **Glossário criado vazio no kit.** Vira arquivo morto; ele nasce com o primeiro termo.
+- **"Fora do escopo" sem gatilho.** Sem "reavaliar quando", a lista vira cemitério, ou o item volta para a fase atual no primeiro pedido.
+
+### Exemplo prático `[EXEMPLO ILUSTRATIVO]`
+
+> Um dev solo tem a ideia de um sistema de agendamento para clínicas. Na Fase 0, o conselho dá GO CONDICIONAL (mercado bom, venda lenta), a ficha soma 24/35 com "distribuição" em 2, e o primeiro teste barato vira cinco conversas com donos de clínica antes de qualquer código. No kit, a entrevista resolve em três rodadas o modelo de acesso, a diferença entre "consulta" e "atendimento" (dois termos que já entram no glossário) e o que fica fora do MVP (integração com convênios, com o gatilho "primeiro contrato assinado"). Ao fechar a fase 3, a revisão em duas frentes acha uma rota sem checagem de posse (frente padrão, `SEC-IDOR-01`) e um relatório que ninguém pediu (frente fase). A retro anota `processo: o agente releu o schema inteiro três vezes — falta um ponteiro no AGENTS.md`.
+
+---
+
 ## GLOSSÁRIO — termos-gatilho com critério verificável
 
 Estes termos aparecem em regras condicionais. Cada um tem um **critério verificável** — não é "sensação", é teste. (Fonte normativa: o glossário da Constituição; aqui expandido.)
@@ -1271,6 +1346,7 @@ Todo domínio normativo da Constituição tem um capítulo explicativo. Sem bura
 | Ordem de construção / escala-pronta / código p/ humanos | `ORD-*`, `SCALE-READY-01`, `LEG-HUMANO-01`, `IA-EVIDENCE-01` | Cap. 22 + Kit §9 |
 | Documentação viva / APIs expostas / quarentena de deps | `DOC-VIVA-01`, `DOC-API-01`, `API-KEY-01`, `WEBHOOK-OUT-01`, `DEP-QUARENTENA-01`, `DEP-MINIMAL-01` | Cap. 23 |
 | Regra executável / auditoria em execução / carga, abuso e operação | `GOV-ENFORCE-01`, `TEST-RUNTIME-01`, `TEST-LOAD-01`, `TEST-ABUSE-01`, `TEST-CHAOS-01`, `SCALE-CAP-01`, `RATE-LIMIT-02/03`, `AUTH-PACE-01`, `SEC-WEBHOOK-IN-01`, `SEC-CONTROL-LIVE-01`, `NET-BIND-01`, `NET-UPSTREAM-01`, `DEP-SERVICE-01`, `HARD-CAP-01`, `OPS-RESTART-01`, `BKP-VERIFY-01`, `BKP-REMEDIATE-01`, `OBS-WORKER-02`, `OBS-HEALTH-02`, `QUEUE-*`, `DB-CURSOR-01`, `DB-POOL-01`, `IA-ENCODING-01` | Cap. 25 |
+| Decidir, entrevistar, cortar escopo, revisar e aprender (método, sem regra nova) | `SAAS-ADR-01`, `CTX-FASE-01`, `CTX-RITUAL-01`, `CTX-FONTE-01`, perfil Solo; candidatas da v3.5.2 | Cap. 26 + Kit §0, §6C, §7B, §7C |
 | Governança do padrão | `GOV-*` | Governança do Padrão (abaixo) |
 
 ---
@@ -1301,4 +1377,4 @@ Este é o princípio de governança mais fácil de esquecer e o mais importante:
 Quando em dúvida sobre onde algo vai: *é uma regra verificável?* → Constituição. *É uma explicação, exemplo, racional ou tabela?* → Handbook. Em conflito entre os dois, **a Constituição vence** — sempre.
 
 ---
-*Fim do Handbook. Companheiro da Constituição de Engenharia — Universal v3.5 (Definitiva) e do Kit de Partida. Ele explica; não decide. A norma está na Constituição. v2.0 acrescentou o cap. 21 (engenharia de contexto) e o Kit; v3.0 — após validação em uso real — o cap. 22 (ordem de construção, escala-pronta, código para humanos, evidência) e a instanciação como modo preferido; v3.1 o cap. 23 (documentação viva que nasce com a feature, chaves de API e webhooks emitidos, backup comprimido+criptografado, quarentena anti-supply-chain de dependências); v3.2 o cap. 24 (pontos de restauração — git como cofre, ledger como mapa, savepoint pré-risco; origem: incidente real de perda irrecuperável por "desfazer de memória"); v3.3/v3.4 o cap. 25 (lições de uma auditoria real — regra escrita que não rodava por máquina, auditoria do sistema em execução, carga, abuso e operação); v3.5 atualizou o cap. 25 com a varredura de nove sistemas que promoveu duas candidatas (expurgo do legado inseguro, teste de falha de dependência) e registrou contra-exemplos das demais.*
+*Fim do Handbook. Companheiro da Constituição de Engenharia — Universal v3.5 (Definitiva) e do Kit de Partida. Ele explica; não decide. A norma está na Constituição. v2.0 acrescentou o cap. 21 (engenharia de contexto) e o Kit; v3.0 — após validação em uso real — o cap. 22 (ordem de construção, escala-pronta, código para humanos, evidência) e a instanciação como modo preferido; v3.1 o cap. 23 (documentação viva que nasce com a feature, chaves de API e webhooks emitidos, backup comprimido+criptografado, quarentena anti-supply-chain de dependências); v3.2 o cap. 24 (pontos de restauração — git como cofre, ledger como mapa, savepoint pré-risco; origem: incidente real de perda irrecuperável por "desfazer de memória"); v3.3/v3.4 o cap. 25 (lições de uma auditoria real — regra escrita que não rodava por máquina, auditoria do sistema em execução, carga, abuso e operação); v3.5 atualizou o cap. 25 com a varredura de nove sistemas que promoveu duas candidatas (expurgo do legado inseguro, teste de falha de dependência) e registrou contra-exemplos das demais; v3.5.2 o cap. 26 (o que vem antes e em volta do código: Fase 0, método de entrevista, glossário do domínio, fora do escopo, revisão em duas frentes, retro de uma linha) e cinco candidatas novas.*

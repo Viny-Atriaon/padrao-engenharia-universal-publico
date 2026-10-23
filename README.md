@@ -4,14 +4,14 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 
 > 📕 **Comece pelo [GUIA-DE-USO.pdf](GUIA-DE-USO.pdf)** — explica todo o fluxo em 7 seções.
 
-## Os artefatos (v3.5)
+## Os artefatos (v3.5.2)
 
 | Arquivo | Papel |
 |---|---|
 | [CONSTITUICAO-ENGENHARIA-UNIVERSAL.md](CONSTITUICAO-ENGENHARIA-UNIVERSAL.md) | **A norma (v3.5).** ~165 regras com ID estável, marcadas `[M]`/`[J]`, parametrizáveis por porte, stack, time e jurisdição. |
-| [HANDBOOK-ENGENHARIA-UNIVERSAL.md](HANDBOOK-ENGENHARIA-UNIVERSAL.md) | **O porquê.** 25 capítulos explicativos — consulta humana; nunca colar inteiro em sessão de IA. |
+| [HANDBOOK-ENGENHARIA-UNIVERSAL.md](HANDBOOK-ENGENHARIA-UNIVERSAL.md) | **O porquê.** 26 capítulos explicativos — consulta humana; nunca colar inteiro em sessão de IA. |
 | [CHANGELOG.md](CHANGELOG.md) | **A evolução.** O que mudou e por que em cada versão, da v2.0 até hoje, mais o quadro **Em preparação** (candidatas e o que destrava cada uma); nenhuma versão é apagada — cada uma fica numa tag (`git show v3.3:ARQUIVO`). |
-| [KIT-DE-PARTIDA-UNIVERSAL.md](KIT-DE-PARTIDA-UNIVERSAL.md) | **O executável.** Templates de `AGENTS.md`, `ESTADO.md`, `FASES.md`, ADR e CORRECOES + prompts de partida, retomada e instanciação. |
+| [KIT-DE-PARTIDA-UNIVERSAL.md](KIT-DE-PARTIDA-UNIVERSAL.md) | **O executável.** Fase 0 (vale construir?), templates de `AGENTS.md`, `ESTADO.md`, `FASES.md`, ADR, CORRECOES e glossário + prompts de partida, retomada e instanciação, método de entrevista e revisão em duas frentes. |
 | [audit.sh](audit.sh) | **O fiscal do código.** Auditoria automática das regras `[M]` verificáveis no repositório: `bash audit.sh /caminho/do/projeto`. Roda no pre-push e no CI. |
 | [audit-runtime.sh](audit-runtime.sh) | **O fiscal do sistema rodando** (TEST-RUNTIME-01): headers reais, `/health`, portas em escuta, backup cifrado e recente, IP real no log, worker vivo; `--abuse` inclui a regressão das defesas. Roda diariamente por agendador. Configuração por projeto (Kit §10). |
 
@@ -32,6 +32,10 @@ Base normativa para construção de qualquer sistema, app, SaaS ou site — por 
 - **Quarentena de dependências** — release com menos de ~14 dias não entra (DEP-QUARENTENA-01).
 - **Pontos de restauração** — todo checkpoint entra num ledger append-only; o git guarda o conteúdo, o ledger guarda o significado; desfazer é sempre via git, nunca de memória (CTX-RESTORE-01/02/03).
 - **Regra escrita não é regra cumprida** — toda regra `[M]` roda por máquina em 4 pontos: pre-push, CI que bloqueia, verificação diária do ambiente em execução e evidência do agente antes de "pronto" (GOV-ENFORCE-01).
+
+## Novidades da v3.5.2
+
+Versão de método — nenhuma regra muda. O padrão passa a cobrir o que vem **antes e em volta do código**: a **Fase 0** (conselho de cinco pareceres, ficha da ideia e testes baratos antes de decidir construir), o **método de entrevista** (o agente descobre os fatos sozinho e leva ao dono só as decisões, em rodadas, cada pergunta com a resposta recomendada), a **revisão em duas frentes** para quem trabalha sozinho, o **glossário do domínio**, o **"Fora do escopo"** no plano de fases e uma **retro de uma linha** no fim da sessão. Tudo no Kit e no capítulo 26 do Handbook. Cinco candidatas novas no quadro **Em preparação** do [CHANGELOG.md](CHANGELOG.md) — entre elas `DEP-AGENT-01`: skill, plugin, servidor MCP e hook do agente tratados como dependência.
 
 ## Novidades da v3.5
 
@@ -54,4 +58,4 @@ Origem: auditoria de um SaaS multi-tenant em produção que tinha as regras de s
 
 ## Licença e contribuição
 
-**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5.1`).
+**[CC BY-ND 4.0](LICENSE)** — uso livre (inclusive comercial) com atribuição; instanciar/adaptar para uso interno é permitido; **não** é permitido redistribuir versões modificadas como se fossem o original. Este repositório é somente leitura para o público — sugestões e correções via Issues; mudanças aceitas entram na próxima versão oficial com tag nova (atual: `v3.5.2`).

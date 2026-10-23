@@ -16,7 +16,7 @@ Regra de versionamento (`GOV-VERSION-01`): regra nova só entra depois de aplica
 
 ## Em preparação — candidatas (não publicadas como regra)
 
-Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura). Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
+Lições observadas que **ainda não têm evidência de aplicação em sistema real** (`GOV-VERSION-01`). Status da última varredura (2026-10-07, nove sistemas do mesmo ecossistema, somente leitura); as cinco últimas entraram na v3.5.2 e ainda não foram varridas. Cada uma entra na versão seguinte à sua primeira aplicação comprovada.
 
 | Candidata | O que exige | Status na varredura | O que destrava |
 |---|---|---|---|
@@ -29,6 +29,34 @@ Lições observadas que **ainda não têm evidência de aplicação em sistema r
 | `SEC-MIGRATE-01` | modo duplo de controle de segurança com data de remoção | parcial em 1/9 (modo duplo registrado em ADR, sem data — e vivo após o prazo natural) | data no ADR + remoção executada |
 | `DB-DRIFT-01` | DDL fora de migration registrado em ledger e reconciliado | ausente em 9/9 | `docs/DRIFT.md` + reconciliação |
 | `EDGE-PROTECT-01` | anti-bot, rate limit, TLS mínimo e HSTS na borda, registrados como código/runbook | não verificável em 9/9 (só existe no painel) | exportar a configuração da borda para o repositório |
+| `DEP-AGENT-01` | skill, plugin, servidor MCP e hook do agente tratados como dependência: lidos antes de instalar, origem oficial, nome conferido, escopo de projeto por padrão, hook global só com ADR; MCP que recebe código ou dado é subprocessador (`LLM-PII-01`) | nova na v3.5.2 — ainda sem varredura | inventário do ferramental do agente no `ESTADO.md` + checagem no `audit.sh` que lista skills, hooks e servidores MCP do projeto e reprova o que não está no inventário |
+| `TEST-PENTEST-01` | teste de invasão simulado contra o sistema rodando antes do 1º cliente pagante e de versão grande; clone sem segredo, alvo local, modelo com contrato de dados | nova na v3.5.2 — ainda sem varredura | rodar num sistema real antes do 1º cliente pagante, com os achados corrigidos e registrados em `CORRECOES.md` |
+| `UX-A11Y-01` | acessibilidade mínima verificada por máquina no CI: contraste, área de toque ≥ 44 px, foco visível, `prefers-reduced-motion`, HTML semântico | nova na v3.5.2 — ainda sem varredura | verificação automática de acessibilidade no CI de um front real, com os achados zerados |
+| `IA-DOCS-01` | código específico de framework escrito a partir da documentação oficial da versão do lockfile, com a fonte citada — nunca da memória do modelo | nova na v3.5.2 — ainda sem varredura | consulta de documentação ligada no agente de um sistema real + o primeiro caso de API desatualizada registrado em `CORRECOES.md` |
+| `TEST-FIRST-01` | correção de bug começa pelo teste que falha reproduzindo o bug; o conserto vem depois | nova na v3.5.2 — ainda sem varredura | três correções seguidas num sistema real com o teste falhando antes do conserto, visível no histórico de commits |
+
+---
+
+## v3.5.2 — 2026-10-22 — Antes e em volta do código: decidir, entrevistar, cortar escopo, revisar
+
+Versão de método (patch): nenhuma regra muda de texto ou significado. O Kit e o Handbook ganham o como fazer de regras que já existiam, e o quadro acima ganha cinco candidatas.
+
+**O que mudou**
+- **Kit §0 — Fase 0, "vale construir?"** — conselho de cinco pareceres independentes (dois a favor, dois contra, um juiz), ficha da ideia em sete critérios e três testes baratos antes de qualquer código. Saída em `docs/adr/000-vale-construir.md`; o parecer é entrada, não decisão.
+- **Kit §7B — método de entrevista** — o agente tira as decisões do dono em rodadas: pergunta de uma vez só o que já está desbloqueado, cada pergunta com a resposta recomendada, fato ele descobre sozinho, decisão é do dono. Ligado ao prompt de partida e às perguntas de produto da camada SaaS (`SAAS-ADR-01`).
+- **Kit §7C — revisão em duas frentes** — o "auto-review com IA" do perfil Solo ganha forma: dois agentes separados, só com o diff, um conferindo o padrão e outro o critério da fase. Entrou também no ritual de fim do modelo de `AGENTS.md`.
+- **Kit §6C — glossário do domínio** (`docs/GLOSSARIO.md`), criado com o primeiro termo definido; o ritual de início manda conferir antes de dar nome a coisa nova.
+- **`FASES.md`** ganha o MVP em uma frase e a seção "Fora do escopo", com motivo e gatilho para reavaliar.
+- **Retro de uma linha** no fim da sessão: atrito repetível vira pendência `processo:` no `ESTADO.md`.
+- **Checklist do site estático** ganha título, descrição, `<h1>` único e imagem de prévia de link em toda página pública (a numeração dos itens seguintes andou uma casa).
+- **Correção:** os prompts de partida e de instanciação e o modelo de `AGENTS.md` ainda citavam a v2.0 e a v3.0; agora usam `{{VERSAO_PADRAO}}`, e a contagem de regras do §9 foi para ~165.
+- **Handbook cap. 26** explica tudo isso e apresenta as cinco candidatas; cap. 20 e a matriz de rastreabilidade apontam para o Kit.
+
+**Por que**
+O padrão cobria bem o que acontece depois que se decide construir, e deixava descobertos três momentos: antes do kit (construir o que não devia existir), a conversa com o dono (pergunta solta deixa suposição silenciosa) e o fim da fase para quem trabalha sozinho (o mesmo agente relendo o próprio diff). O conselho da Fase 0 já era prática real antes de entrar aqui; o resto veio da comparação com métodos abertos de engenharia com agentes, adaptados ao vocabulário do padrão. Ficou tudo no Kit e no Handbook porque a Constituição está a ~25 linhas do teto (`GOV-SIZE-01`) e nada disso é regra nova.
+
+**De onde vieram as candidatas**
+Da mesma comparação. `DEP-AGENT-01` é a mais urgente: ao avaliar ferramental de agente apareceram nome de pacote parecido com impostores, ferramenta de teste que manda o código para um modelo de terceiro por padrão e comando de instalação que, no shell errado, cria pasta no lugar errado — e o padrão não dizia nada sobre o que se instala no próprio agente.
 
 ---
 

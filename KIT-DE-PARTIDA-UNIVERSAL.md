@@ -1,5 +1,5 @@
 # KIT DE PARTIDA — UNIVERSAL
-**Versão 3.4 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
+**Versão 3.5.2 · Companheiro executável da Constituição de Engenharia (§CTX e §ORD) · Padrão executável > padrão escrito**
 
 Este arquivo transforma o Protocolo de Contexto (regras `CTX-*` da Constituição) em **arquivos prontos para copiar**. Ele existe porque o maior risco de construir com IA não é código ruim — é **amnésia de contexto**: a janela estoura, a sessão seguinte não sabe o que foi decidido, e o agente refaz, desfaz ou contradiz o trabalho anterior. A cura é estrutural: **antes da primeira linha de código, cria-se a memória do projeto no repositório.** O chat é descartável; o repo é permanente.
 
@@ -7,9 +7,26 @@ Regra de ouro (CTX-KIT-01): **nenhum código antes do kit completo** — nem par
 
 ---
 
+## 0. FASE 0 — VALE CONSTRUIR? (antes do kit, quando o produto é novo)
+
+O kit protege o projeto da amnésia; não protege do projeto errado. Ideia nova de produto, projeto próprio, feature grande ou pivô passa primeiro por aqui. **Não se aplica** a encomenda de cliente com escopo fechado, bug, refatoração ou ajuste em produto que já existe.
+
+1. **Conselho de cinco pareceres independentes**, em paralelo (cinco agentes ou cinco sessões que não leem uns aos outros), todos com o mesmo contexto: quem constrói, tempo e capital disponíveis, produtos já em andamento.
+   - A favor 1 — viabilidade técnica: stack, peças prontas, prazo realista do MVP.
+   - A favor 2 — oportunidade: tamanho do mercado, custo para conquistar cliente, casos parecidos que deram certo, sinergia com o que já existe.
+   - Contra 1 — complexidade escondida: armadilhas técnicas, escopo que não aparece na ideia.
+   - Contra 2 — viabilidade comercial: concorrência, custo de aquisição contra receita por cliente, cancelamento.
+   - Juiz — nota de 1 a 10 em mercado, métricas, investimento, esforço e custo de oportunidade → **GO**, **NO-GO** ou **GO CONDICIONAL**, sempre com uma alternativa.
+2. **Ficha da ideia** — nota de 1 a 5 em sete critérios (total /35): gravidade do problema · tamanho do mercado · disposição a pagar · espaço frente à concorrência · distribuição (como chegam os 100 primeiros clientes) · momento · vantagem de quem constrói. 28 ou mais: construir · 21–27: corrigir o critério mais fraco antes · 14–20: mudar o ângulo · abaixo de 14: recomeçar.
+3. **Três testes baratos antes de qualquer código** — cada um com UMA hipótese, os passos exatos, o critério de sucesso em número, prazo de até 2 semanas e custo baixo.
+
+**Saída:** o placar, a ficha e o resultado dos testes viram `docs/adr/000-vale-construir.md` (template §5) quando o kit for criado. O parecer é **entrada, não decisão**: quem decide é o `{{OWNER}}`, inclusive contra o placar — e nenhum conselho revoga decisão já registrada em ADR ou no `ESTADO.md`.
+
+---
+
 ## 1. CHECKLIST PRÉ-CONSTRUÇÃO POR PORTE
 
-Execute na ordem. Só depois do último ✅ a primeira feature pode começar.
+Execute na ordem. Só depois do último ✅ a primeira feature pode começar. Produto novo passa antes pela Fase 0 (§0).
 
 ### `{{PORTE}}` = site-estático (kit mínimo — 10 minutos)
 1. [ ] `git init` + primeiro commit
@@ -18,33 +35,34 @@ Execute na ordem. Só depois do último ✅ a primeira feature pode começar.
 4. [ ] `README.md` (o que é + como rodar/publicar)
 5. [ ] `docs/FASES.md` com as fases planejadas (template §4)
 6. [ ] `docs/PONTOS-DE-RESTAURACAO.md` com cabeçalho (template §6B) — todo checkpoint vira ponto de restauração
+7. [ ] Toda página PÚBLICA com `<title>` e descrição próprios, um único `<h1>` e imagem de prévia de link (`og:image`, ~1200×630) — é ela que aparece quando o link é compartilhado em mensageiro e rede social
 
 ### `{{PORTE}}` = app-simples (kit padrão — 30 minutos)
 Tudo do site-estático, mais:
-7. [ ] `docs/adr/` criado + ADR-001 registrando stack escolhida (template §5)
-8. [ ] `docs/CORRECOES.md` vazio com cabeçalho (template §6)
-9. [ ] `.env.example` completo + `.env` no `.gitignore` desde o commit 1
-10. [ ] Estrutura de diretórios do Nível 0 (`modules/` + `shared/` ou equivalente do framework)
+8. [ ] `docs/adr/` criado + ADR-001 registrando stack escolhida (template §5)
+9. [ ] `docs/CORRECOES.md` vazio com cabeçalho (template §6)
+10. [ ] `.env.example` completo + `.env` no `.gitignore` desde o commit 1
+11. [ ] Estrutura de diretórios do Nível 0 (`modules/` + `shared/` ou equivalente do framework)
 
 ### `{{PORTE}}` = sistema (kit completo — ~2 horas, economiza semanas)
 Tudo do app-simples, mais:
-11. [ ] Validação de schema instalada e exemplificada em 1 rota
-12. [ ] Logger estruturado JSON com `requestId` configurado
-13. [ ] Error tracking conectado (categoria em `{{CATEGORIA_FORNECEDOR}}`)
-14. [ ] Migrations versionadas inicializadas
-15. [ ] Script de deploy nas fases universais (aborta em erro + lock)
-16. [ ] Headers de segurança + auth com cookie HttpOnly (SE há login)
-17. [ ] Backup automatizado (comprimido + criptografado) + dead man's switch (SE há dados de usuário)
-18. [ ] Doc técnica inicializada: `docs/API.md` ou OpenAPI (DOC-API-01) — cresce a cada fase, nunca "no final"
-19. [ ] Triagem de dependências ativa: `ignore-scripts` por padrão + regra de quarentena de release (DEP-QUARENTENA-01)
+12. [ ] Validação de schema instalada e exemplificada em 1 rota
+13. [ ] Logger estruturado JSON com `requestId` configurado
+14. [ ] Error tracking conectado (categoria em `{{CATEGORIA_FORNECEDOR}}`)
+15. [ ] Migrations versionadas inicializadas
+16. [ ] Script de deploy nas fases universais (aborta em erro + lock)
+17. [ ] Headers de segurança + auth com cookie HttpOnly (SE há login)
+18. [ ] Backup automatizado (comprimido + criptografado) + dead man's switch (SE há dados de usuário)
+19. [ ] Doc técnica inicializada: `docs/API.md` ou OpenAPI (DOC-API-01) — cresce a cada fase, nunca "no final"
+20. [ ] Triagem de dependências ativa: `ignore-scripts` por padrão + regra de quarentena de release (DEP-QUARENTENA-01)
 
 ### `{{PORTE}}` = SaaS (kit sistema + camada SaaS)
 Tudo do sistema, mais:
-20. [ ] Perguntas de produto respondidas pelo `{{OWNER}}` e registradas em ADR (SAAS-ADR-01) — planos? trial? multi-tenant? cobrança? offboarding?
-21. [ ] SE multi-tenant: `tenant_id` no schema desde o dia 0 + scoping executável (SAAS-TENANT-02)
-22. [ ] Gateway de pagamento como fonte da verdade + webhook idempotente (esqueleto)
-23. [ ] SE emite chaves de API / envia webhooks: esqueleto conforme API-KEY-01 / WEBHOOK-OUT-01 (hash da chave, prefixo, assinatura de saída)
-24. [ ] Teste de posse com 2 contas no plano de testes
+21. [ ] Perguntas de produto respondidas pelo `{{OWNER}}` pelo método de entrevista (§7B) e registradas em ADR (SAAS-ADR-01) — planos? trial? multi-tenant? cobrança? offboarding?
+22. [ ] SE multi-tenant: `tenant_id` no schema desde o dia 0 + scoping executável (SAAS-TENANT-02)
+23. [ ] Gateway de pagamento como fonte da verdade + webhook idempotente (esqueleto)
+24. [ ] SE emite chaves de API / envia webhooks: esqueleto conforme API-KEY-01 / WEBHOOK-OUT-01 (hash da chave, prefixo, assinatura de saída)
+25. [ ] Teste de posse com 2 contas no plano de testes
 
 ---
 
@@ -57,7 +75,7 @@ Tudo do sistema, mais:
 ```markdown
 # AGENTS.md — {{NOME_DO_PROJETO}}
 
-> Padrão seguido: Constituição de Engenharia Universal **v2.0** · Porte: {{PORTE}} · Auditado em: {{DATA}}
+> Padrão seguido: Constituição de Engenharia Universal **v{{VERSAO_PADRAO}}** (a tag do padrão usada neste projeto) · Porte: {{PORTE}} · Auditado em: {{DATA}}
 > Pendências de auditoria: (nenhuma | listar IDs de regra + waiver/ADR)
 
 ## Ritual obrigatório de início de sessão (CTX-RITUAL-01)
@@ -65,6 +83,7 @@ Tudo do sistema, mais:
 2. Leia `ESTADO.md` — ele diz onde o trabalho parou e o que vem agora.
 3. Leia os ADRs em `docs/adr/` marcados como recentes no ESTADO.md.
 4. SE for tocar área já corrigida: leia a entrada correspondente em `docs/CORRECOES.md`.
+5. SE for dar nome a entidade, tela, rota ou tabela nova: confira `docs/GLOSSARIO.md` (um termo por conceito).
 NUNCA comece a codar sem os passos 1-2. NUNCA pergunte "onde paramos?" — o ESTADO.md responde.
 
 ## O projeto
@@ -78,9 +97,15 @@ NUNCA comece a codar sem os passos 1-2. NUNCA pergunte "onde paramos?" — o EST
 - Idiomas: domínio={{IDIOMA_DOMINIO}} · código={{IDIOMA_CODIGO}} · commits={{IDIOMA_COMMITS}}
 
 ## Ritual obrigatório de fim de sessão
-1. Atualize `ESTADO.md` (fase, checkpoint, decisões, próximos 3 passos, bloqueios).
-2. Commit + push (commits atômicos em {{IDIOMA_COMMITS}}).
-3. Decisão tomada no chat → grave no arquivo-fonte (ADR/ESTADO) ANTES de encerrar (CTX-RESUMO-01).
+1. SE a sessão fecha uma fase: revisão em duas frentes antes do checkpoint — padrão (Constituição
+   instanciada + este arquivo) e fase (critério de pronto em docs/FASES.md), cada uma num agente
+   separado que só recebe o diff. Achado se corrige agora, não "depois".
+2. Atualize `ESTADO.md` (fase, checkpoint, decisões, próximos 3 passos, bloqueios).
+3. Commit + push (commits atômicos em {{IDIOMA_COMMITS}}).
+4. Decisão tomada no chat → grave no arquivo-fonte (ADR/ESTADO) ANTES de encerrar (CTX-RESUMO-01).
+5. Retro de uma linha: o que atrapalhou o agente nesta sessão? Se for algo que vai se repetir, anote
+   em `ESTADO.md` › Bloqueios/pendências com o prefixo `processo:` — o {{OWNER}} decide se vira
+   checagem automática, linha neste arquivo ou candidata ao padrão.
 ```
 
 ---
@@ -126,6 +151,7 @@ NUNCA comece a codar sem os passos 1-2. NUNCA pergunte "onde paramos?" — o EST
 # FASES — {{NOME_DO_PROJETO}}
 > Regra (CTX-FASE-01): cada fase cabe em UMA sessão de agente e fecha com checkpoint
 > (commit + ESTADO.md). Fase que não fechou estava grande — dividir aqui e registrar.
+> MVP em uma frase: o usuário consegue {{fazer X}} e obtém {{resultado Y}} em menos de {{Z}} minutos.
 
 | Fase | Entrega verificável | Critério de pronto | Status |
 |---|---|---|---|
@@ -135,6 +161,11 @@ NUNCA comece a codar sem os passos 1-2. NUNCA pergunte "onde paramos?" — o EST
 | F4 | 1ª fatia vertical do fluxo principal: dados→serviço→API→tela | {{fluxo demonstrável fim-a-fim}} | ⬜ |
 | F5+ | {{demais fatias verticais, uma por sessão}} | {{como verificar}} | ⬜ |
 
+## Fora do escopo (decidido NÃO fazer agora)
+| Item | Por que não agora | Reavaliar quando |
+|---|---|---|
+| {{funcionalidade}} | {{não é essencial ao fluxo principal / custo alto / sem demanda medida}} | {{gatilho concreto, ex.: 10 clientes pagantes pedindo}} |
+
 Princípios de fatiamento (§ORD da Constituição):
 - Ordem das camadas DENTRO de cada fatia: dados → segurança → serviço → contrato de API → tela.
   Front antes do contrato é proibido; "segurança depois" é proibido (nasce junto, transversal).
@@ -143,6 +174,7 @@ Princípios de fatiamento (§ORD da Constituição):
   escalar tem que significar "adicionar instância", nunca "reescrever".
 - Toda fase termina com algo demonstrável ou testável — nunca "50% de X".
 - Descoberta no meio da fase que muda o plano → registrar aqui + ESTADO.md antes de continuar.
+- Pedido novo no meio do caminho entra em "Fora do escopo" ou numa fase futura — nunca na fase em andamento.
 ```
 
 ---
@@ -218,18 +250,38 @@ Princípios de fatiamento (§ORD da Constituição):
 
 ---
 
+## 6C. TEMPLATE — `docs/GLOSSARIO.md` (a língua do domínio — nasce com o 1º termo)
+
+> Um arquivo-dono para os termos de negócio, no espírito do CTX-FONTE-01: o nome que aparece na
+> conversa, na tela, na tabela e no código é o mesmo. Não se cria vazio — nasce quando a primeira
+> palavra do domínio é definida (na entrevista §7B ou numa decisão) e cresce junto com o sistema.
+> Termo ambíguo ("conta" é o cliente ou o usuário?) se resolve aqui, antes de virar nome no código.
+
+```markdown
+# GLOSSÁRIO — {{NOME_DO_PROJETO}}
+> Um termo por conceito. Mudou o significado? Atualize aqui no mesmo checkpoint e procure os usos no código.
+
+| Termo | O que é | Não confundir com | Onde vive no código |
+|---|---|---|---|
+| {{termo}} | {{definição em 1 frase, na língua do negócio}} | {{termo vizinho e a diferença}} | {{tabela / módulo / rota}} |
+```
+
+---
+
 ## 7. PROMPT DE PARTIDA (colável — inicia qualquer projeto no padrão)
 
 Cole numa sessão nova de agente para começar um projeto do zero:
 
 ```text
 Vamos iniciar o projeto {{NOME}} ({{PORTE}}: site-estático|app-simples|sistema|SaaS).
-Siga a Constituição de Engenharia Universal v2.0 (colada abaixo / no repositório).
+Siga a Constituição de Engenharia Universal v{{VERSAO_PADRAO}} — a tag mais
+recente do padrão (colada abaixo / no repositório).
 
 ANTES de qualquer código (CTX-KIT-01):
 1. Execute o checklist pré-construção do meu porte (Kit de Partida §1).
 2. Crie AGENTS.md, ESTADO.md e docs/FASES.md a partir dos templates do Kit,
-   preenchidos para este projeto — me pergunte o que não souber ({{OWNER}} decide).
+   preenchidos para este projeto. O que faltar, tire comigo pelo método de
+   entrevista (Kit §7B): fato você descobre sozinho, decisão é minha ({{OWNER}}).
 3. Proponha o fatiamento em fases verticais em docs/FASES.md e aguarde meu ok.
 4. Só então comece a F1, fechando com checkpoint (commit + ESTADO.md).
 
@@ -251,6 +303,43 @@ passo do ESTADO.md. Não me pergunte "onde paramos" — o ESTADO.md responde.
 
 ---
 
+## 7B. MÉTODO DE ENTREVISTA (como o agente tira as decisões do `{{OWNER}}`)
+
+Vale para o kit (§1), para as perguntas de produto da camada SaaS (SAAS-ADR-01) e para qualquer fase que comece com decisão em aberto. "Me pergunte o que não souber", sem método, vira uma pergunta solta por vez ou uma lista de trinta de uma vez — as duas cansam e deixam buracos.
+
+- **Mapa de decisões.** Cada decisão abre outras que dependem dela. Trabalhe em rodadas.
+- **Rodada = tudo que já dá para perguntar.** Pergunte de uma vez todas as decisões cujos pré-requisitos já estão resolvidos — e só elas. A que depende de outra ainda aberta fica para a rodada seguinte.
+- **Toda pergunta vem com a resposta recomendada**, escrita de modo que "sim" aceite a recomendação.
+- **Fato é trabalho do agente; decisão é do `{{OWNER}}`.** O que dá para descobrir lendo o repositório, a documentação ou o ambiente, o agente descobre sozinho, sem travar a rodada. Só pergunta o que é escolha.
+- **Termina quando não sobra decisão aberta nem suposição silenciosa.** Nada se constrói antes de o `{{OWNER}}` confirmar que o entendimento é o mesmo.
+- **Saída:** decisão estrutural → ADR (§5); o resto → `ESTADO.md` (CTX-RESUMO-01); termo de negócio definido → `docs/GLOSSARIO.md` (§6C).
+
+Formato de cada rodada:
+
+```text
+Q1 — {{título}}: {{contexto e opções, se houver}}
+→ Recomendo: {{resposta}}
+
+Q2 — {{título}}: ...
+→ Recomendo: ...
+```
+
+## 7C. REVISÃO EM DUAS FRENTES (o code review de quem trabalha sozinho)
+
+No perfil Solo, o review humano vira "auto-review com IA" (§Perfis da Constituição). Para não ser o mesmo agente relendo o próprio trabalho com o mesmo contexto, a revisão roda em **dois agentes separados que só recebem o diff**: quem implementou está sob pressão de contexto; quem revisa chega limpo e enxerga o que passou. Roda no fim de cada fase, antes do checkpoint.
+
+```text
+Revise o diff entre {{hash do último checkpoint}} e HEAD em duas frentes, cada uma
+num agente separado que recebe só o diff e o documento da sua frente:
+1. PADRÃO — o diff obedece à docs/CONSTITUICAO-INSTANCIADA.md e ao AGENTS.md?
+   Aponte o ID da regra em cada violação.
+2. FASE — o diff entrega o critério de pronto da fase em docs/FASES.md, nem mais
+   nem menos? Aponte o que falta e o que entrou sem ter sido pedido.
+Junte os achados por gravidade e me mostre antes de corrigir.
+```
+
+---
+
 ## 8. POR QUE ISTO RESOLVE A AMNÉSIA (o mecanismo, em 8 linhas)
 
 1. **Janela estourou no meio?** O último checkpoint (CTX-CHECKPOINT-01) garante que nada além de minutos se perde — commit + ESTADO.md são o savegame.
@@ -264,10 +353,10 @@ passo do ESTADO.md. Não me pergunte "onde paramos" — o ESTADO.md responde.
 
 ## 9. PROMPT DE INSTANCIAÇÃO (gera a Constituição do SEU projeto)
 
-A Constituição completa tem ~135 regras — mas um site estático ativa ~1/3 delas, e **regra irrelevante no contexto dilui a obediência às relevantes**. O modo de uso preferido (v3.0) é gerar a versão instanciada uma única vez por projeto e colar ELA nas sessões:
+A Constituição completa tem ~165 regras — mas um site estático ativa ~1/3 delas, e **regra irrelevante no contexto dilui a obediência às relevantes**. O modo de uso preferido (desde a v3.0) é gerar a versão instanciada uma única vez por projeto e colar ELA nas sessões:
 
 ```text
-Leia a CONSTITUICAO-ENGENHARIA-UNIVERSAL.md (v3.0) e gere a "Constituição
+Leia a CONSTITUICAO-ENGENHARIA-UNIVERSAL.md (v{{VERSAO_PADRAO}}) e gere a "Constituição
 Instanciada" deste projeto em docs/CONSTITUICAO-INSTANCIADA.md, assim:
 
 Parâmetros: {{PORTE}}={{...}} · {{TAMANHO_TIME}}={{...}} · {{TIPO_APP}}={{...}} ·
@@ -281,8 +370,8 @@ Regras de geração:
 3. Mantenha na íntegra: §CTX, §ORD, Desenvolvimento Assistido por IA, Definição de
    Pronto e Ordem de Precedência — esses nunca são cortados.
 4. Substitua os placeholders {{...}} pelos meus valores reais.
-5. Cabeçalho: "Instanciada da Constituição Universal v3.0 em {{DATA}} — regenerar
-   se os parâmetros mudarem".
+5. Cabeçalho: "Instanciada da Constituição Universal v{{VERSAO_PADRAO}} em {{DATA}} —
+   regenerar se os parâmetros mudarem ou se sair versão nova do padrão".
 ```
 
 ---
@@ -354,4 +443,4 @@ Exceção só por waiver com data (`.audit-waivers` ou `RT_WAIVERS`); vencido, r
 
 ---
 
-*Fim do Kit de Partida v3.4 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-25). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara.*
+*Fim do Kit de Partida v3.5.2 — companheiro da Constituição (§CTX/§ORD) e do Handbook (capítulos 21-26). v3.2: template §6B (PONTOS-DE-RESTAURACAO.md) e savepoint pré-risco no prompt de partida. v3.4: `ESTADO.md` ganha "Capacidade e hardware" (SCALE-CAP-01) e "Serviços externos" (DEP-SERVICE-01) — o número que o sistema aguenta e quem é dono de cada dependência passam a morar na memória viva. v3.5.1: §10 — templates dos 4 pontos de aplicação por máquina (pre-push, CI, `audit-runtime.conf` + agendador, seção do `AGENTS.md`) e o roteiro para provar que cada ponto dispara. v3.5.2: §0 Fase 0 (vale construir?), §6C glossário do domínio, §7B método de entrevista, §7C revisão em duas frentes, "Fora do escopo" e MVP em uma frase no `FASES.md`, retro de uma linha no fim da sessão, prévia de link no checklist do site e a versão do padrão como `{{VERSAO_PADRAO}}` nos prompts — nada disso é regra nova; é método para cumprir as que já existem.*
